@@ -486,8 +486,8 @@ function drawBusyaFoodBag(cx,cy){
  ctx.fillStyle='#fffdfa';ctx.beginPath();ctx.roundRect(-15,-18,30,36,3);ctx.fill();
  ctx.strokeStyle='#a8a09b';ctx.lineWidth=.8;ctx.stroke();
  ctx.fillStyle='#a02e45';ctx.beginPath();ctx.roundRect(-13,-16,26,10,1.5);ctx.fill();
- ctx.fillStyle='#fff9f5';ctx.font='bold 6.5px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.fillText('MINI ADULT',0,-11);
+ ctx.fillStyle='#fff9f5';ctx.font='bold 5.5px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('MINI ADULT',0,-11.1);
  ctx.fillStyle='#17263b';ctx.font='bold 12.2px Arial,sans-serif';ctx.fillText('monge',0,-1);
  ctx.fillStyle='#9e3247';ctx.beginPath();ctx.roundRect(-13,5,26,8,1.2);ctx.fill();
  ctx.fillStyle='#fff';ctx.font='bold 6.4px Arial,sans-serif';ctx.fillText('LAMB',0,9.2);
@@ -609,17 +609,17 @@ function cachedGarden(){
 // Smooth cinematic camera. The 15x15 maze and collision rules stay unchanged.
 const CAMERA_ZOOM=1.34;
 let cameraX=300,cameraY=300,cameraReady=false;
-let displayPX=1,displayPY=1,displayEnemyX=13,displayEnemyY=13,visualReady=false,visualTime=0;
+let displayPX=1,displayPY=1,displayEnemyX=13,displayEnemyY=13,visualReady=false,visualTime=0,cameraElapsed=1/60;
 function cameraFollow(){
  const view=600/CAMERA_ZOOM,half=view/2;
  const targetX=Math.max(half,Math.min(600-half,displayPX*40+20));
  const targetY=Math.max(half,Math.min(600-half,displayPY*40+20));
  if(!cameraReady){cameraX=targetX;cameraY=targetY;cameraReady=true}
- else {const k=1-Math.exp(-Math.min((performance.now()-visualTime+16)/1000,.05)*16);cameraX+=(targetX-cameraX)*k;cameraY+=(targetY-cameraY)*k}
+ else {const k=1-Math.exp(-Math.max(1/120,Math.min(cameraElapsed||1/60,.05))*18);cameraX+=(targetX-cameraX)*k;cameraY+=(targetY-cameraY)*k}
 }
 function draw(alpha=1){
  const now=performance.now();
- const elapsed=visualTime?Math.min((now-visualTime)/1000,.05):1/60;visualTime=now;
+ const elapsed=visualTime?Math.min((now-visualTime)/1000,.05):1/60;visualTime=now;cameraElapsed=elapsed;
  // Frame-rate-independent render smoothing; physics, pickups and collision use real positions.
  const follow=1-Math.exp(-elapsed*22);
  const enemyFrom=prevEnemy||enemy;
@@ -664,8 +664,9 @@ function joyMove(e){
  if(dist<3){return} // Tiny accidental thumb movement must not erase a buffered turn.
  // Hysteresis prevents accidental diagonal thumb wobble from switching axes.
  let horizontal=Math.abs(dx)>=Math.abs(dy);
- if(queuedDir[0]!==0&&Math.abs(dx)*1.20>=Math.abs(dy))horizontal=true;
- if(queuedDir[1]!==0&&Math.abs(dy)*1.20>=Math.abs(dx))horizontal=false;
+ // Retain the intended axis through slight thumb wobble; switch only on a decisive gesture.
+ if(queuedDir[0]!==0&&Math.abs(dx)*1.55>=Math.abs(dy))horizontal=true;
+ if(queuedDir[1]!==0&&Math.abs(dy)*1.55>=Math.abs(dx))horizontal=false;
  const next=horizontal?[Math.sign(dx)||1,0]:[0,Math.sign(dy)||1];
  queuedDir=[...next];
  dir=[...next];
