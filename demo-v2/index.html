@@ -375,75 +375,111 @@ function refreshStatus(){
  if(phase==='danger'&&Date.now()-lastLaugh>3200){laugh();lastLaugh=Date.now()}
  hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;
 }
+// Distinct full-body upright animated dog portraits, rendered entirely on canvas.
 function dog(x,y,isBusya){
  const X=x*40+20,Y=y*40+20,t=performance.now()/1000;
- const isMoving=isBusya=== (hero==='busya') ? (playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused : !over&&!paused;
- const bounce=isMoving?Math.sin(t*17+(isBusya?0:1))*1.3:Math.sin(t*2.6)*.45;
- const blink=Math.sin(t*.93+(isBusya?1.5:0))>.995?.15:1;
- ctx.save();ctx.translate(X,Y);ctx.scale(1.14,1.14);
- // Ground shadow and little animated feet
- ctx.fillStyle='#27391c55';ctx.beginPath();ctx.ellipse(0,13,15,4,0,0,Math.PI*2);ctx.fill();
- ctx.translate(0,bounce);
- const coat=isBusya?'#efad69':'#c88143',light=isBusya?'#ffcf8f':'#eeb879',dark=isBusya?'#ae633b':'#8d4b2d';
- const pawShift=isMoving?Math.sin(t*17)*2.2:0;
- ctx.fillStyle=dark;
- for(let side of [-1,1]){ctx.beginPath();ctx.ellipse(side*5.5,20+(side*pawShift),4.5,6.5,side*.13,0,Math.PI*2);ctx.fill()}
- // Tail wags behind the body; costume sleeves and moving paws.
- ctx.save();ctx.translate(10,6);ctx.rotate(Math.sin(t*(isMoving?12:4))*.25);
- ctx.strokeStyle=isBusya?'#e9a16d':'#b97845';ctx.lineWidth=5;ctx.lineCap='round';
- ctx.beginPath();ctx.moveTo(0,3);ctx.quadraticCurveTo(10,0,7,-8);ctx.stroke();ctx.restore();
- const fabric=isBusya?'#e74436':'#ddc8a6',shade=isBusya?'#bd282b':'#b49b77';
- ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,10,10.5,15.5,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(-1,9,9.4,14,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=isBusya?'#f6b84c':'#f5e5c7';ctx.beginPath();ctx.ellipse(0,9,5.7,11,0,0,Math.PI*2);ctx.fill();
+ const isPlayer=isBusya===(hero==='busya');
+ const moving=isPlayer?(playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused:!over&&!paused;
+ const gait=moving?Math.sin(t*17+(isBusya?0:1)):0;
+ const sway=moving?Math.sin(t*8.5)*.035:Math.sin(t*2)*.012;
+ const bounce=moving?Math.abs(Math.sin(t*17))*1.25:Math.sin(t*2.4)*.4;
+ const blink=Math.sin(t*.91+(isBusya?1.5:0))>.995?.13:1;
+ const coat=isBusya?'#b87545':'#ba713c',light=isBusya?'#eec091':'#f0bf83',dark=isBusya?'#79462e':'#8b502e';
+ const cloth=isBusya?'#e33c35':'#ddc9a5',clothDark=isBusya?'#a9232b':'#b19a77';
+ const oval=(xx,yy,rx,ry,color,angle=0)=>{ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(xx,yy,rx,ry,angle,0,Math.PI*2);ctx.fill()};
+ ctx.save();ctx.translate(X,Y+2);ctx.scale(1.08,1.08);
+ // A grounded, lively silhouette with the head above a clearly visible torso.
+ oval(0,19,12,3.5,'#34432866');
+ ctx.translate(0,-bounce);ctx.rotate(sway);
+ // Tail behind the outfit.
+ ctx.save();ctx.translate(8,9);ctx.rotate(Math.sin(t*(moving?12:4))*.24);
+ ctx.strokeStyle=coat;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();
+ ctx.moveTo(0,3);ctx.quadraticCurveTo(10,1,9,-8);ctx.stroke();ctx.restore();
+ // Two hind legs actually stride in opposite phases.
  for(const side of [-1,1]){
-  ctx.save();ctx.translate(side*9,6);ctx.rotate(side*Math.sin(t*17)*.16*(isMoving?1:.18));
-  ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,0,3.5,8,side*.2,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=coat;ctx.beginPath();ctx.ellipse(0,5,4.3,3,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.save();ctx.translate(side*5.4,11);
+  ctx.rotate(side*gait*.30);
+  oval(0,4,3.9,7.5,clothDark,side*.12);
+  oval(side*.6,10,4.9,3.1,coat,side*.14);
+  oval(side*.6,10.9,3.1,1.2,light);
+  ctx.restore();
  }
- // Hood behind the head: red Pooh-inspired hood or soft beige hoodie.
- ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,-5,15.8,14.7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,-6,14.9,14.1,0,0,Math.PI*2);ctx.fill();
+ // Longer jacket torso and separate bright belly panel.
+ oval(0,4,10.6,14.7,clothDark);
+ oval(-.5,3,9.5,13.5,cloth);
+ oval(0,4.5,5.7,10,isBusya?'#f4b844':'#f3e4cb');
+ ctx.strokeStyle=isBusya?'#fbd16e':'#fff0d6';ctx.lineWidth=1.1;
+ ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(0,11);ctx.stroke();
+ // Tiny front paws and sleeves swing as they run.
+ for(const side of [-1,1]){
+  ctx.save();ctx.translate(side*9,-1);ctx.rotate(side*(gait*.4+.10));
+  oval(side*.9,4,3.5,8,cloth,side*.18);
+  oval(side*1.3,10,3.4,3.5,coat);
+  oval(side*1.2,11,2.2,1.4,light);
+  ctx.restore();
+ }
+ // Costume hood wraps around the head, but never obscures the face.
+ oval(0,-12,15.2,14.6,clothDark);
+ oval(0,-13,14.1,13.8,cloth);
  if(isBusya){
+  // Golden Pooh-inspired hood with rounded little bear ears.
+  oval(0,-15,13.6,12.7,'#f4b94e');
   for(const side of [-1,1]){
-   ctx.fillStyle='#d52f2e';ctx.beginPath();ctx.arc(side*10.8,-18,5.2,0,Math.PI*2);ctx.fill();
-   ctx.fillStyle='#f6bc56';ctx.beginPath();ctx.arc(side*10.8,-18,2.8,0,Math.PI*2);ctx.fill();
+   oval(side*10.5,-25,5.4,5.4,'#cf352e');
+   oval(side*10.5,-25,3.1,3.1,'#f7c65b');
   }
  }else{
-  ctx.strokeStyle='#f7e9ce';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,-5,13,Math.PI*.14,Math.PI*.86);ctx.stroke();
+  // Soft beige hood with a folded rim and drawstrings.
+  ctx.strokeStyle='#f7e9d0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-13,12.2,.16,Math.PI-.16);ctx.stroke();
+  ctx.strokeStyle='#fff3df';ctx.lineWidth=1.3;
+  for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*6,-1);ctx.lineTo(side*6,8);ctx.stroke()}
  }
- // Ears: pointed Chihuahua versus floppy curly Maltipoo
+ // Chihuahua pointed ears or maltipoo fluffy hanging ears.
  if(isBusya){
   for(const side of [-1,1]){
-   ctx.save();ctx.translate(side*9,-8);ctx.rotate(side*(.10+Math.sin(t*3)*.055));
-   ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(-side*5,3);ctx.quadraticCurveTo(-side*7,-14,side*1,-19);ctx.quadraticCurveTo(side*12,-15,side*8,5);ctx.closePath();ctx.fill();
-   ctx.fillStyle='#f29c99';ctx.beginPath();ctx.moveTo(-side*2,0);ctx.quadraticCurveTo(-side*2,-12,side*1,-14);ctx.quadraticCurveTo(side*6,-10,side*5,1);ctx.closePath();ctx.fill();ctx.restore();
+   ctx.save();ctx.translate(side*10,-16);ctx.rotate(side*(.10+Math.sin(t*3)*.035));
+   ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(-side*4,4);
+   ctx.quadraticCurveTo(-side*8,-12,side*1,-18);
+   ctx.quadraticCurveTo(side*11,-12,side*7,5);ctx.closePath();ctx.fill();
+   ctx.fillStyle='#e99a91';ctx.beginPath();ctx.moveTo(-side*1,1);
+   ctx.quadraticCurveTo(-side*2,-9,side*1,-13);
+   ctx.quadraticCurveTo(side*6,-9,side*4,1);ctx.closePath();ctx.fill();ctx.restore();
   }
  }else{
   for(const side of [-1,1]){
-   ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(side*12,-5+Math.sin(t*3+side)*.5,6.6,10,side*.25,0,Math.PI*2);ctx.fill();
-   for(let i=0;i<4;i++){ctx.fillStyle=i%2?coat:light;ctx.beginPath();ctx.arc(side*(12+(i%2)*2),-12+i*4,3.8,0,Math.PI*2);ctx.fill()}
+   oval(side*12,-13,6.5,10.3,dark,side*.22);
+   for(let i=0;i<5;i++)oval(side*(12+(i%2)*1.5),-21+i*3.7,4.5,4.4,i%2?light:coat);
   }
  }
- // Rounded head with shaded muzzle
- const face=ctx.createRadialGradient(-5,-12,1,1,-3,20);
- face.addColorStop(0,light);face.addColorStop(1,coat);
- ctx.fillStyle=face;ctx.beginPath();ctx.ellipse(0,-5,13.5,12,0,0,Math.PI*2);ctx.fill();
- if(!isBusya){for(let i=0;i<9;i++){const angle=Math.PI*1.04+i*Math.PI*.12;ctx.fillStyle=i%2?light:coat;ctx.beginPath();ctx.arc(Math.cos(angle)*11, -5+Math.sin(angle)*10,3.8,0,Math.PI*2);ctx.fill()}}
- // Bright brows and eyes, with occasional blink
+ // Individually shaped faces: narrow Chihuahua vs round curly maltipoo.
+ const face=ctx.createRadialGradient(-5,-18,1,1,-11,19);
+ face.addColorStop(0,light);face.addColorStop(.72,coat);face.addColorStop(1,dark);
+ oval(0,-14,isBusya?11.7:13.1,isBusya?11.8:12.8,face);
+ if(!isBusya){
+  // Curly halo, ears and soft forehead curls.
+  for(let i=0;i<11;i++){
+   const angle=Math.PI*1.04+i*Math.PI*.092;
+   oval(Math.cos(angle)*11.4,-14+Math.sin(angle)*11.1,3.7,3.6,i%2?light:coat);
+  }
+  for(let i=0;i<5;i++)oval(-8+i*4,-24+(i%2)*1.6,3.6,3.2,i%2?light:coat);
+ }else{
+  oval(0,-19,8.6,5.3,'#e2a977');
+ }
+ // Eyes, glints and expressive brows.
  for(const side of [-1,1]){
-  ctx.fillStyle=isBusya?'#8d5538':'#91542d';ctx.beginPath();ctx.ellipse(side*5.7,-9.8,3.2,1.15,-side*.15,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff9ed';ctx.beginPath();ctx.ellipse(side*5.5,-5.5,3.5,3.6*blink,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#29221e';ctx.beginPath();ctx.ellipse(side*5.5,-5.3,2.35,2.6*blink,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='white';ctx.beginPath();ctx.arc(side*5.5-0.8,-6.3,blink>.5?0.8:.1,0,Math.PI*2);ctx.fill();
+  oval(side*5.2,-17.3,3.1,1.1,dark,-side*.15);
+  oval(side*5.2,-13.4,3.25,3.5*blink,'#fff8e9');
+  oval(side*5.3,-13.1,2.25,2.65*blink,'#29221e');
+  if(blink>.5)oval(side*5.3-.8,-14.4,.85,.85,'#ffffff');
  }
- ctx.fillStyle=isBusya?'#ffe0b2':'#f8d8ab';ctx.beginPath();ctx.ellipse(0,1,7,5.7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle='#2b2020';ctx.beginPath();ctx.ellipse(0,-.5,3.3,2.5,0,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle='#7b453b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,4);ctx.quadraticCurveTo(-2.5,6,-4,3.8);ctx.moveTo(0,4);ctx.quadraticCurveTo(2.5,6,4,3.8);ctx.stroke();
- // Tiny animated tongue appears during energetic running.
- if(isMoving&&Math.sin(t*9+(isBusya?0:2))>.72){
-  ctx.fillStyle='#f17f8d';ctx.beginPath();ctx.ellipse(0,6.5,2.2,3.2,0,0,Math.PI*2);ctx.fill();
- }
+ // Separate muzzle and little happy mouth.
+ oval(0,-6.9,isBusya?6.7:7.6,5.3,isBusya?'#f7d6ab':'#f7d8ae');
+ oval(0,-9,3.1,2.4,'#302321');
+ ctx.strokeStyle='#75443c';ctx.lineWidth=1.1;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(0,-6.5);ctx.lineTo(0,-4.7);
+ ctx.quadraticCurveTo(-2.6,-2.4,-4.4,-5.2);
+ ctx.moveTo(0,-4.7);ctx.quadraticCurveTo(2.6,-2.4,4.4,-5.2);ctx.stroke();
+ if(moving&&Math.sin(t*9+(isBusya?0:2))>.64)oval(0,-2.5,2.2,3.1,'#f48b94');
  ctx.restore();
 }
 // Miniature of the player's real Monge VetSolution Gastrointestinal EGGS tray.
