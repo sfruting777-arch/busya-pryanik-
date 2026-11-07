@@ -238,7 +238,7 @@ const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=do
 function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
 function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 function laugh(){beep(290,.11,'sawtooth',.055);setTimeout(()=>beep(410,.13,'sawtooth',.055),140);setTimeout(()=>beep(310,.14,'sawtooth',.055),310)}
-function start(h){openAudio();hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
+function start(h){openAudio();cameraReady=false;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
 function back(){over=true;document.getElementById('game').style.display='none';document.getElementById('menu').style.display='block'}function togglePause(){paused=!paused;status.textContent=paused?'Пауза':'Вперёд!'}
 function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(obj.x+dx,obj.y+dy)){obj.x+=dx;obj.y+=dy;return true}return false}
 const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -380,7 +380,7 @@ function dog(x,y,isBusya){
  const isMoving=isBusya=== (hero==='busya') ? (playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused : !over&&!paused;
  const bounce=isMoving?Math.sin(t*17+(isBusya?0:1))*1.3:Math.sin(t*2.6)*.45;
  const blink=Math.sin(t*.93+(isBusya?1.5:0))>.995?.15:1;
- ctx.save();ctx.translate(X,Y);
+ ctx.save();ctx.translate(X,Y);ctx.scale(1.12,1.12);
  // Ground shadow and little animated feet
  ctx.fillStyle='#27391c55';ctx.beginPath();ctx.ellipse(0,13,15,4,0,0,Math.PI*2);ctx.fill();
  ctx.translate(0,bounce);
@@ -540,11 +540,23 @@ function gardenTile(x,y){
   if(seed%9===0){ctx.fillStyle='#6b9956';ctx.beginPath();ctx.ellipse(X+34,Y+33,3,2,-.4,0,7);ctx.fill()}
  }
 }
-function draw(alpha=1){ctx.clearRect(0,0,600,600);for(let y=0;y<15;y++)for(let x=0;x<15;x++)gardenTile(x,y);
+// Smooth cinematic camera. The 15x15 maze and collision rules stay unchanged.
+const CAMERA_ZOOM=1.34;
+let cameraX=300,cameraY=300,cameraReady=false;
+function cameraFollow(){
+ const view=600/CAMERA_ZOOM,half=view/2;
+ const targetX=Math.max(half,Math.min(600-half,px*40+20));
+ const targetY=Math.max(half,Math.min(600-half,py*40+20));
+ if(!cameraReady){cameraX=targetX;cameraY=targetY;cameraReady=true}
+ else {cameraX+=(targetX-cameraX)*.115;cameraY+=(targetY-cameraY)*.115}
+}
+function draw(alpha=1){ctx.clearRect(0,0,600,600);
+ cameraFollow();ctx.save();
+ ctx.translate(300,300);ctx.scale(CAMERA_ZOOM,CAMERA_ZOOM);ctx.translate(-cameraX,-cameraY);for(let y=0;y<15;y++)for(let x=0;x<15;x++)gardenTile(x,y);
 for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){drawVetSolutionPackPhoto(x*40+20,y*40+20)}else{drawBusyaFoodBag(x*40+20,y*40+20)}}const blend=(from,to)=>from+(to-from)*alpha;
 dog((prevEnemy?.x??enemy.x)+((enemy.x-(prevEnemy?.x??enemy.x))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),(prevEnemy?.y??enemy.y)+((enemy.y-(prevEnemy?.y??enemy.y))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),hero==='pryanik');
 if(performance.now()<aiAlertUntil&&!over){ctx.font='bold 32px system-ui';ctx.textAlign='center';ctx.fillText('❗',enemy.x*40+20,enemy.y*40-7)}
-dog(px,py,hero==='busya');if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
+dog(px,py,hero==='busya');ctx.restore();if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
 var enemyLast=0;
 function frame(t){
  if(document.getElementById('game').style.display==='none')return;
