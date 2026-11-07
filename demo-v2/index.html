@@ -238,7 +238,7 @@ const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=do
 function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
 function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 function laugh(){beep(290,.11,'sawtooth',.055);setTimeout(()=>beep(410,.13,'sawtooth',.055),140);setTimeout(()=>beep(310,.14,'sawtooth',.055),310)}
-function start(h){cachedGarden();openAudio();cameraReady=false;visualReady=false;visualTime=0;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
+function start(h){cachedGarden();openAudio();cameraReady=false;visualReady=false;visualTime=0;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
 function back(){over=true;document.getElementById('game').style.display='none';document.getElementById('menu').style.display='block'}function togglePause(){paused=!paused;status.textContent=paused?'Пауза':'Вперёд!'}
 function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(obj.x+dx,obj.y+dy)){obj.x+=dx;obj.y+=dy;return true}return false}
 const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -259,7 +259,7 @@ function randomPatrolTarget(){
  return spots[Math.floor(Math.random()*spots.length)]||{x:13,y:13};
 }
 
-let px=1,py=1, playerDirection=[0,0], requestedDirection=[0,0], previousFrame=0, secondaryJoyDir=[0,0];
+let px=1,py=1, playerDirection=[0,0], requestedDirection=[0,0], previousFrame=0, secondaryJoyDir=[0,0], pendingTurn=[0,0],pendingTurnUntil=0;
 function chase(){
  const now=performance.now();
  const playerTile={x:Math.round(px),y:Math.round(py)};
@@ -307,7 +307,7 @@ function checkPlayerContact(ax,ay,bx,by){
  if(nearSegment(e.x,e.y,ax,ay,bx,by)){caught();return true}
  return false;
 }
-function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(150,.5,'square',.07);if(lives<=0){over=true;status.textContent='Попался! Попробуй ещё раз 🐾';return}player={x:1,y:1};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];enemy={x:13,y:13};prevPlayer={...player};prevEnemy={...enemy};aiReset();aiSafeUntil=performance.now()+AI_INVULNERABLE_MS;visualReady=false;status.textContent='Ай! Минус одна жизнь!'}
+function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(150,.5,'square',.07);if(lives<=0){over=true;status.textContent='Попался! Попробуй ещё раз 🐾';return}player={x:1,y:1};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;enemy={x:13,y:13};prevPlayer={...player};prevEnemy={...enemy};aiReset();aiSafeUntil=performance.now()+AI_INVULNERABLE_MS;visualReady=false;status.textContent='Ай! Минус одна жизнь!'}
 // Responsive arcade movement: instant reversal, buffered turns and gentle junction snapping.
 // Movement is split at tile centres, so even a slow frame cannot skip a junction.
 const PLAYER_TILES_PER_SECOND=6.0;
@@ -340,9 +340,12 @@ function update(dt){
   const cx=Math.round(px),cy=Math.round(py);
   const atCentre=Math.abs(px-cx)<EPS&&Math.abs(py-cy)<EPS;
   const wantsTurn=queuedDir[0]!==0||queuedDir[1]!==0;
+  const pendingActive=performance.now()<pendingTurnUntil&&(pendingTurn[0]||pendingTurn[1]);
   if(atCentre){
    px=cx;py=cy;player.x=cx;player.y=cy;
-   if(wantsTurn&&valid(cx+queuedDir[0],cy+queuedDir[1])){
+   if(pendingActive&&valid(cx+pendingTurn[0],cy+pendingTurn[1])){
+    playerDirection=[...pendingTurn];pendingTurn=[0,0];pendingTurnUntil=0;
+   }else if(wantsTurn&&valid(cx+queuedDir[0],cy+queuedDir[1])){
     playerDirection=[...queuedDir];
    }else if(wantsTurn&&(secondaryJoyDir[0]||secondaryJoyDir[1])&&
       valid(cx+secondaryJoyDir[0],cy+secondaryJoyDir[1])){
@@ -694,11 +697,17 @@ function joyMove(e){
  const next=horizontal?[Math.sign(dx)||1,0]:[0,Math.sign(dy)||1];
  secondaryJoyDir=(Math.min(Math.abs(dx),Math.abs(dy))>=4)?
    (horizontal?[0,Math.sign(dy)]:[Math.sign(dx),0]):[0,0];
+ // A deliberate perpendicular gesture is remembered through the next junction.
+ // Holding the stick diagonally no longer erases a requested corner turn.
+ const perpendicular=(playerDirection[0]&&next[1])||(playerDirection[1]&&next[0]);
+ if(perpendicular&&(!pendingTurn[0]&&!pendingTurn[1]||pendingTurn[0]!==next[0]||pendingTurn[1]!==next[1])){
+   pendingTurn=[...next];pendingTurnUntil=performance.now()+650;
+ }
  queuedDir=[...next];
  dir=[...next];
 }
 joy.addEventListener('pointerdown',e=>{e.preventDefault();if(joyPointer!==null)return;joyPointer=e.pointerId;joyOrigin={x:e.clientX,y:e.clientY};joy.classList.add('joy-active');joy.setPointerCapture(e.pointerId);joyMove(e)});
 joy.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer){e.preventDefault();joyMove(e)}});
-function joyEnd(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joyOrigin=null;joy.classList.remove('joy-active');dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];stick.style.transform='translate(-50%,-50%)'}
+function joyEnd(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joyOrigin=null;joy.classList.remove('joy-active');dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;stick.style.transform='translate(-50%,-50%)'}
 joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);joy.addEventListener('lostpointercapture',joyEnd);joy.addEventListener('contextmenu',e=>e.preventDefault());
 </script></html>
