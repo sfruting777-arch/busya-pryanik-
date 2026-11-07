@@ -388,10 +388,30 @@ function dog(x,y,isBusya){
  const pawShift=isMoving?Math.sin(t*17)*2.2:0;
  ctx.fillStyle=dark;
  for(let side of [-1,1]){ctx.beginPath();ctx.ellipse(side*8,11+(side*pawShift),4.2,5.2,side*.13,0,Math.PI*2);ctx.fill()}
- // Body, bright neck band and chest
- ctx.fillStyle=coat;ctx.beginPath();ctx.ellipse(0,6,12.5,12,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=isBusya?'#e83c47':'#e9cf9b';ctx.beginPath();ctx.roundRect(-11,8,22,6,3);ctx.fill();
- ctx.fillStyle=light;ctx.beginPath();ctx.ellipse(0,4,7,8,0,0,Math.PI*2);ctx.fill();
+ // Tail wags behind the body; costume sleeves and moving paws.
+ ctx.save();ctx.translate(10,6);ctx.rotate(Math.sin(t*(isMoving?12:4))*.25);
+ ctx.strokeStyle=isBusya?'#e9a16d':'#b97845';ctx.lineWidth=5;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(0,3);ctx.quadraticCurveTo(10,0,7,-8);ctx.stroke();ctx.restore();
+ const fabric=isBusya?'#e74436':'#ddc8a6',shade=isBusya?'#bd282b':'#b49b77';
+ ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,6,13.4,12.5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(-1,5,11.6,11.5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=isBusya?'#f6b84c':'#f5e5c7';ctx.beginPath();ctx.ellipse(0,5,6.8,9,0,0,Math.PI*2);ctx.fill();
+ for(const side of [-1,1]){
+  ctx.save();ctx.translate(side*10,7);ctx.rotate(side*Math.sin(t*17)*.16*(isMoving?1:.18));
+  ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,0,4.5,7,side*.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=coat;ctx.beginPath();ctx.ellipse(0,5,4.3,3,0,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ // Hood behind the head: red Pooh-inspired hood or soft beige hoodie.
+ ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,-5,15.8,14.7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,-6,14.9,14.1,0,0,Math.PI*2);ctx.fill();
+ if(isBusya){
+  for(const side of [-1,1]){
+   ctx.fillStyle='#d52f2e';ctx.beginPath();ctx.arc(side*10.8,-18,5.2,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#f6bc56';ctx.beginPath();ctx.arc(side*10.8,-18,2.8,0,Math.PI*2);ctx.fill();
+  }
+ }else{
+  ctx.strokeStyle='#f7e9ce';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,-5,13,Math.PI*.14,Math.PI*.86);ctx.stroke();
+ }
  // Ears: pointed Chihuahua versus floppy curly Maltipoo
  if(isBusya){
   for(const side of [-1,1]){
@@ -420,6 +440,10 @@ function dog(x,y,isBusya){
  ctx.fillStyle=isBusya?'#ffe0b2':'#f8d8ab';ctx.beginPath();ctx.ellipse(0,1,7,5.7,0,0,Math.PI*2);ctx.fill();
  ctx.fillStyle='#2b2020';ctx.beginPath();ctx.ellipse(0,-.5,3.3,2.5,0,0,Math.PI*2);ctx.fill();
  ctx.strokeStyle='#7b453b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,4);ctx.quadraticCurveTo(-2.5,6,-4,3.8);ctx.moveTo(0,4);ctx.quadraticCurveTo(2.5,6,4,3.8);ctx.stroke();
+ // Tiny animated tongue appears during energetic running.
+ if(isMoving&&Math.sin(t*9+(isBusya?0:2))>.72){
+  ctx.fillStyle='#f17f8d';ctx.beginPath();ctx.ellipse(0,6.5,2.2,3.2,0,0,Math.PI*2);ctx.fill();
+ }
  ctx.restore();
 }
 // Miniature of the player's real Monge VetSolution Gastrointestinal EGGS tray.
