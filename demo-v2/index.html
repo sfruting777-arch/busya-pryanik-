@@ -376,7 +376,35 @@ function refreshStatus(){
  hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;
 }
 function dog(x,y,isBusya){const px=x*40+20,py=y*40+20;ctx.save();ctx.translate(px,py);ctx.fillStyle=isBusya?'#e3a56a':'#bb6c32';ctx.beginPath();ctx.ellipse(0,2,15,13,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=isBusya?'#eab477':'#ce8749';if(isBusya){ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(-11,-24);ctx.lineTo(-1,-12);ctx.moveTo(12,-7);ctx.lineTo(11,-24);ctx.lineTo(1,-12);ctx.fill()}else{for(let a of [-12,12]){ctx.beginPath();ctx.arc(a,-8,9,0,7);ctx.fill()}}ctx.fillStyle='white';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,3,0,7);ctx.fill()}ctx.fillStyle='#21151c';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,1.7,0,7);ctx.fill()}ctx.beginPath();ctx.arc(0,6,3,0,7);ctx.fill();ctx.fillStyle=isBusya?'#e5453e':'#dfd1b3';ctx.fillRect(-10,12,20,5);ctx.restore()}
-function draw(alpha=1){ctx.clearRect(0,0,600,600);for(let y=0;y<15;y++)for(let x=0;x<15;x++){ctx.fillStyle=map[y][x]==='#'?'#53617e':'#27344a';ctx.fillRect(x*40,y*40,40,40);if(map[y][x]==='#'){ctx.fillStyle='#677f8a';ctx.fillRect(x*40+2,y*40+2,36,7);ctx.fillStyle='#6d9962';ctx.fillRect(x*40+3,y*40+1,34,4)}}for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){ctx.fillText('🥫',x*40+20,y*40+29)}else{ctx.fillStyle='#a96b38';for(const [dx,dy,r] of [[-7,-4,5],[6,-6,5],[-1,7,6]]){ctx.beginPath();ctx.arc(x*40+20+dx,y*40+20+dy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e4b078';ctx.lineWidth=1.2;ctx.stroke()}}}const blend=(from,to)=>from+(to-from)*alpha;
+function gardenTile(x,y){
+ const X=x*40,Y=y*40,wall=map[y][x]==='#',seed=(x*127+y*263+x*y*17)%97;
+ if(wall){
+  const g=ctx.createLinearGradient(X,Y,X+40,Y+40);
+  g.addColorStop(0,'#507b57');g.addColorStop(1,'#264e3c');
+  ctx.fillStyle=g;ctx.fillRect(X,Y,40,40);
+  ctx.fillStyle='#1a3d2f';ctx.fillRect(X+3,Y+7,34,30);
+  ctx.fillStyle='#79aa65';ctx.fillRect(X+2,Y+2,36,8);
+  ctx.fillStyle='#9bc57b';ctx.fillRect(X+3,Y+2,34,3);
+  ctx.fillStyle='#376a48';ctx.fillRect(X+5,Y+11,30,3);
+  ctx.fillStyle='#3b7045';ctx.beginPath();ctx.ellipse(X+20,Y+21,15,11,0,0,7);ctx.fill();
+  for(let i=0;i<3;i++){
+   const xx=X+8+((seed+i*13)%26),yy=Y+12+((seed+i*19)%23);
+   ctx.fillStyle=i%2?'#6d9d53':'#548b4c';ctx.beginPath();ctx.arc(xx,yy,3+(i%2),0,7);ctx.fill();
+  }
+  if(seed%7===0){ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('🌼',X+21,Y+25)}
+  else if(seed%11===0){ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('🌷',X+18,Y+27)}
+ }else{
+  ctx.fillStyle=(x+y)%2?'#e3cba1':'#ead5ad';ctx.fillRect(X,Y,40,40);
+  ctx.fillStyle='#d9bc90';ctx.fillRect(X+2,Y+2,36,1);
+  ctx.fillStyle='#f5e5c5';ctx.fillRect(X+3,Y+5,1,31);
+  ctx.fillStyle='#cfb38a';ctx.globalAlpha=.3;
+  ctx.beginPath();ctx.ellipse(X+9+(seed%19),Y+11+(seed%13),4,2,0,0,7);ctx.fill();
+  ctx.globalAlpha=1;
+  if(seed%9===0){ctx.fillStyle='#83a96d';ctx.beginPath();ctx.ellipse(X+33,Y+33,3,2,-.4,0,7);ctx.fill()}
+ }
+}
+function draw(alpha=1){ctx.clearRect(0,0,600,600);for(let y=0;y<15;y++)for(let x=0;x<15;x++)gardenTile(x,y);
+for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){ctx.fillText('🥫',x*40+20,y*40+29)}else{ctx.fillStyle='#a96b38';for(const [dx,dy,r] of [[-7,-4,5],[6,-6,5],[-1,7,6]]){ctx.beginPath();ctx.arc(x*40+20+dx,y*40+20+dy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e4b078';ctx.lineWidth=1.2;ctx.stroke()}}}const blend=(from,to)=>from+(to-from)*alpha;
 dog((prevEnemy?.x??enemy.x)+((enemy.x-(prevEnemy?.x??enemy.x))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),(prevEnemy?.y??enemy.y)+((enemy.y-(prevEnemy?.y??enemy.y))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),hero==='pryanik');
 if(performance.now()<aiAlertUntil&&!over){ctx.font='bold 32px system-ui';ctx.textAlign='center';ctx.fillText('❗',enemy.x*40+20,enemy.y*40-7)}
 dog(px,py,hero==='busya');if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
