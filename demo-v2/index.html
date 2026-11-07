@@ -449,7 +449,8 @@ function drawVetSolutionPackPhoto(cx,cy){
  if(!pryanikFoodPhotoReady||!pryanikFoodPhoto.naturalWidth){drawVetSolutionPack(cx,cy);return;}
  ctx.save();ctx.translate(cx,cy);
  ctx.shadowColor='#382b1b77';ctx.shadowBlur=3;ctx.shadowOffsetY=2;
- ctx.drawImage(pryanikFoodPhoto,-17,-17,34,34);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.drawImage(pryanikFoodPhoto,-19,-19,38,38);
  ctx.restore();
 }
 function drawVetSolutionPack(cx,cy){
