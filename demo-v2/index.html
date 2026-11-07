@@ -167,15 +167,36 @@ body:has(#menu:not([style*="display: none"])) > h1 + p{display:none}
 </style><section id="intro" aria-label="Вступительная заставка"><div id="introContent"><div class="introHeading"><div id="introTitle">🐾 Буся против Пряника</div><div id="introSubtitle">БИТВА ЗА MONGE</div></div><div class="introPortrait" aria-label="Семейная фотография с Бусей и Пряником"><img src="busya_pryanik_intro.jpg" alt="Сказочная заставка с женой, Бусей и Пряником" draggable="false"><div class="pryanikBreath" aria-hidden="true"></div><div class="busyaWarmth" aria-hidden="true"></div></div><button id="introMusic" type="button" onclick="toggleIntroMusic()" aria-label="Включить музыку">♫ Включить музыку</button><button id="introPlay" type="button" onclick="enterGame()">🐾 Играть</button></div></section><h1>🐾 Буся против Пряника</h1><p>БИТВА ЗА MONGE</p><section id="menu"><div class="choice-group"><p>Выбери героя:</p><div class="choice-buttons"><button class="hero-choice" onclick="start('pryanik')">🐶 Пряник</button><button class="hero-choice" onclick="start('busya')">🐕 Буся</button></div><div class="hero-showdown-stage"><img class="hero-showdown" src="hero_showdown.webp" alt="Пряник и Буся азартно смотрят друг на друга перед игрой" draggable="false" loading="eager"><div class="vs-halo" aria-hidden="true"></div><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i></div></div></section><section id="game"><div id="hud"></div><canvas id="field" width="600" height="600"></canvas><div id="status"></div><div id="controls"><div id="joystick" aria-label="Джойстик"><div id="stick" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pawGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0ba"/><stop offset=".55" stop-color="#ffd077"/><stop offset="1" stop-color="#e89b44"/></linearGradient></defs><g fill="url(#pawGold)"><ellipse cx="14" cy="22" rx="6.2" ry="9" transform="rotate(-25 14 22)"/><ellipse cx="27" cy="15" rx="6.2" ry="9" transform="rotate(-8 27 15)"/><ellipse cx="41" cy="16" rx="6.2" ry="9" transform="rotate(13 41 16)"/><ellipse cx="52" cy="26" rx="5.8" ry="8.5" transform="rotate(28 52 26)"/><path d="M32 29c-7 0-9 6-13 10-5 5-7 10-4 15 4 7 12 3 17 2 6-1 13 5 18-1 5-6 0-13-5-18-4-4-7-8-13-8Z"/></g></svg></div></div><button id="pauseButton" onclick="togglePause()">⏯ Пауза</button></div><div id="pad"><span class="empty"></span><button data-d="0,-1">▲</button><span class="empty"></span><button data-d="-1,0">◀</button><button onclick="togglePause()">⏯</button><button data-d="1,0">▶</button><span class="empty"></span><button data-d="0,1">▼</button><span class="empty"></span></div><button onclick="back()">Главное меню</button><p class="hint">Положи палец на джойстик и слегка веди в сторону. Разворачивайся мгновенно и заранее выбирай поворот — герой повернёт на ближайшем проходе. Можно использовать WASD. Звук включится после нажатия «Играть».</p></section><script>
 // Original gentle music-box tune, started only after a user gesture (iPhone policy).
 let introMusicContext=null,introMusicTimer=null,introMusicStep=0;
-const introTune=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,659.25,783.99,1046.5,783.99,587.33,659.25,523.25,null];
+const introTempo=.25;
+const introMelody=[76,79,81,79,76,74,72,74,76,79,83,81,79,76,74,72,74,76,79,76,74,72,71,72,74,76,79,81,79,76,74,72];
+const introBass=[48,48,53,53,45,45,43,43];
+const introChords=[[60,64,67],[60,64,67],[65,69,72],[65,69,72],[57,60,64],[57,60,64],[55,59,62],[55,59,62]];
+function introFreq(midi){return 440*Math.pow(2,(midi-69)/12)}
+function introVoice(midi,when,duration,kind='triangle',gain=.03){
+ if(!introMusicContext)return;
+ const ctx=introMusicContext,osc=ctx.createOscillator(),env=ctx.createGain();
+ osc.type=kind;osc.frequency.setValueAtTime(introFreq(midi),when);
+ env.gain.setValueAtTime(.0001,when);env.gain.exponentialRampToValueAtTime(gain,when+.018);
+ env.gain.exponentialRampToValueAtTime(.0001,when+duration);
+ osc.connect(env);env.connect(ctx.destination);osc.start(when);osc.stop(when+duration+.02);
+}
+function introPerc(when,kind){
+ const ctx=introMusicContext;if(!ctx)return;
+ const osc=ctx.createOscillator(),env=ctx.createGain();
+ osc.type=kind==='kick'?'sine':'triangle';
+ osc.frequency.setValueAtTime(kind==='kick'?110:650,when);
+ osc.frequency.exponentialRampToValueAtTime(kind==='kick'?48:250,when+.09);
+ env.gain.setValueAtTime(kind==='kick'?.065:.012,when);
+ env.gain.exponentialRampToValueAtTime(.0001,when+(kind==='kick'?.14:.055));
+ osc.connect(env);env.connect(ctx.destination);osc.start(when);osc.stop(when+.16);
+}
 function introMusicNote(){
  if(!introMusicContext)return;
- const freq=introTune[introMusicStep++%introTune.length];if(!freq)return;
- const t=introMusicContext.currentTime;
- const osc=introMusicContext.createOscillator(),vol=introMusicContext.createGain();
- osc.type='sine';osc.frequency.setValueAtTime(freq,t);
- vol.gain.setValueAtTime(.0001,t);vol.gain.exponentialRampToValueAtTime(.065,t+.025);vol.gain.exponentialRampToValueAtTime(.0001,t+.28);
- osc.connect(vol);vol.connect(introMusicContext.destination);osc.start(t);osc.stop(t+.3);
+ const t=introMusicContext.currentTime+.025,n=introMusicStep++,beat=n%4,bar=Math.floor(n/4)%8;
+ introVoice(introMelody[n%introMelody.length],t,.20,'triangle',.037);
+ if(beat===0){for(const m of introChords[bar])introVoice(m,t,.68,'sine',.009);introVoice(introBass[bar],t,.4,'triangle',.032);}
+ if(beat===2)introVoice(introBass[bar]+7,t,.25,'triangle',.022);
+ if(beat===0||beat===2)introPerc(t,'kick');else introPerc(t,'hat');
 }
 function stopIntroMusic(){
  if(introMusicTimer!==null){clearInterval(introMusicTimer);introMusicTimer=null;}
@@ -186,8 +207,8 @@ function toggleIntroMusic(){
  if(introMusicTimer!==null){stopIntroMusic();return;}
  try{
  introMusicContext=new (window.AudioContext||window.webkitAudioContext)();
- introMusicContext.resume();
- introMusicStep=0;introMusicNote();introMusicTimer=setInterval(introMusicNote,330);
+ introMusicContext.resume();introMusicStep=0;introMusicNote();
+ introMusicTimer=setInterval(introMusicNote,introTempo*1000);
  const b=document.getElementById('introMusic');b.textContent='♫ Выключить музыку';b.setAttribute('aria-label','Выключить музыку');
  }catch(e){stopIntroMusic();}
 }
