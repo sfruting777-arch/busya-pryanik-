@@ -238,7 +238,7 @@ const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=do
 function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
 function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 function laugh(){beep(290,.11,'sawtooth',.055);setTimeout(()=>beep(410,.13,'sawtooth',.055),140);setTimeout(()=>beep(310,.14,'sawtooth',.055),310)}
-function start(h){openAudio();cameraReady=false;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
+function start(h){openAudio();cameraReady=false;visualReady=false;visualTime=0;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
 function back(){over=true;document.getElementById('game').style.display='none';document.getElementById('menu').style.display='block'}function togglePause(){paused=!paused;status.textContent=paused?'Пауза':'Вперёд!'}
 function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(obj.x+dx,obj.y+dy)){obj.x+=dx;obj.y+=dy;return true}return false}
 const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -292,7 +292,7 @@ function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(15
 // Responsive arcade movement: instant reversal, buffered turns and gentle junction snapping.
 // Movement is split at tile centres, so even a slow frame cannot skip a junction.
 const PLAYER_TILES_PER_SECOND=6.0;
-const TURN_ASSIST_TILES=0.22;
+const TURN_ASSIST_TILES=0.085;
 // Collect when the player's path actually passes close to a pickup centre.
 // This also handles assisted turns that snap past a tile centre.
 function collectAlongPath(ax,ay,bx,by){
@@ -380,9 +380,9 @@ function dog(x,y,isBusya){
  const X=x*40+20,Y=y*40+20,t=performance.now()/1000;
  const isPlayer=isBusya===(hero==='busya');
  const moving=isPlayer?(playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused:!over&&!paused;
- const gait=moving?Math.sin(t*17+(isBusya?0:1)):0;
- const sway=moving?Math.sin(t*8.5)*.035:Math.sin(t*2)*.012;
- const bounce=moving?Math.abs(Math.sin(t*17))*1.25:Math.sin(t*2.4)*.4;
+ const gait=moving?Math.sin(t*12+(isBusya?0:1)):0;
+ const sway=moving?Math.sin(t*6)*.022:Math.sin(t*2)*.012;
+ const bounce=moving?Math.abs(Math.sin(t*12))*.75:Math.sin(t*2.4)*.4;
  const blink=Math.sin(t*.91+(isBusya?1.5:0))>.995?.13:1;
  const coat=isBusya?'#b87545':'#ba713c',light=isBusya?'#eec091':'#f0bf83',dark=isBusya?'#79462e':'#8b502e';
  const cloth=isBusya?'#e33c35':'#ddc9a5',clothDark=isBusya?'#a9232b':'#b19a77';
@@ -392,7 +392,7 @@ function dog(x,y,isBusya){
  oval(0,19,12,3.5,'#34432866');
  ctx.translate(0,-bounce);ctx.rotate(sway);
  // Tail behind the outfit.
- ctx.save();ctx.translate(8,9);ctx.rotate(Math.sin(t*(moving?12:4))*.24);
+ ctx.save();ctx.translate(8,9);ctx.rotate(Math.sin(t*(moving?9:4))*.18);
  ctx.strokeStyle=coat;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();
  ctx.moveTo(0,3);ctx.quadraticCurveTo(10,1,9,-8);ctx.stroke();ctx.restore();
  // Two hind legs actually stride in opposite phases.
@@ -602,6 +602,7 @@ function gardenTile(x,y){
 // Smooth cinematic camera. The 15x15 maze and collision rules stay unchanged.
 const CAMERA_ZOOM=1.34;
 let cameraX=300,cameraY=300,cameraReady=false;
+let displayPX=1,displayPY=1,displayEnemyX=13,displayEnemyY=13,visualReady=false,visualTime=0;
 function cameraFollow(){
  const view=600/CAMERA_ZOOM,half=view/2;
  const targetX=Math.max(half,Math.min(600-half,px*40+20));
@@ -609,13 +610,30 @@ function cameraFollow(){
  if(!cameraReady){cameraX=targetX;cameraY=targetY;cameraReady=true}
  else {cameraX+=(targetX-cameraX)*.115;cameraY+=(targetY-cameraY)*.115}
 }
-function draw(alpha=1){ctx.clearRect(0,0,600,600);
+function draw(alpha=1){
+ const now=performance.now();
+ const elapsed=visualTime?Math.min((now-visualTime)/1000,.05):1/60;visualTime=now;
+ // Frame-rate-independent render smoothing; physics, pickups and collision use real positions.
+ const follow=1-Math.exp(-elapsed*22);
+ const enemyFrom=prevEnemy||enemy;
+ const enemyFraction=Math.min(1,Math.max(0,(now-enemyLast)/ENEMY_STEP_MS));
+ const enemyTargetX=enemyFrom.x+(enemy.x-enemyFrom.x)*enemyFraction;
+ const enemyTargetY=enemyFrom.y+(enemy.y-enemyFrom.y)*enemyFraction;
+ if(!visualReady){displayPX=px;displayPY=py;displayEnemyX=enemyTargetX;displayEnemyY=enemyTargetY;visualReady=true}
+ else{
+  // Teleports on losing a life must reset rather than glide through walls.
+  if(Math.hypot(displayPX-px,displayPY-py)>2.2){displayPX=px;displayPY=py}
+  else{displayPX+=(px-displayPX)*follow;displayPY+=(py-displayPY)*follow}
+  if(Math.hypot(displayEnemyX-enemyTargetX,displayEnemyY-enemyTargetY)>2.2){displayEnemyX=enemyTargetX;displayEnemyY=enemyTargetY}
+  else{displayEnemyX+=(enemyTargetX-displayEnemyX)*follow;displayEnemyY+=(enemyTargetY-displayEnemyY)*follow}
+ }
+ ctx.clearRect(0,0,600,600);
  cameraFollow();ctx.save();
  ctx.translate(300,300);ctx.scale(CAMERA_ZOOM,CAMERA_ZOOM);ctx.translate(-cameraX,-cameraY);for(let y=0;y<15;y++)for(let x=0;x<15;x++)gardenTile(x,y);
 for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){drawVetSolutionPackPhoto(x*40+20,y*40+20)}else{drawBusyaFoodBag(x*40+20,y*40+20)}}const blend=(from,to)=>from+(to-from)*alpha;
-dog((prevEnemy?.x??enemy.x)+((enemy.x-(prevEnemy?.x??enemy.x))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),(prevEnemy?.y??enemy.y)+((enemy.y-(prevEnemy?.y??enemy.y))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),hero==='pryanik');
+dog(displayEnemyX,displayEnemyY,hero==='pryanik');
 if(performance.now()<aiAlertUntil&&!over){ctx.font='bold 32px system-ui';ctx.textAlign='center';ctx.fillText('❗',enemy.x*40+20,enemy.y*40-7)}
-dog(px,py,hero==='busya');ctx.restore();if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
+dog(displayPX,displayPY,hero==='busya');ctx.restore();if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
 var enemyLast=0;
 function frame(t){
  if(document.getElementById('game').style.display==='none')return;
