@@ -445,12 +445,28 @@ pryanikFoodPhoto.src='monge_pryanik_clean.png?asset=20261107b';
 let pryanikFoodPhotoReady=false;
 pryanikFoodPhoto.onload=()=>{pryanikFoodPhotoReady=true;};
 pryanikFoodPhoto.onerror=()=>{pryanikFoodPhotoReady=false;};
+// Game-optimized readable miniature of the real Monge VetSolution Eggs tray.
+// Drawn as crisp vectors: no unreadable microscopic photo lettering.
 function drawVetSolutionPackPhoto(cx,cy){
- if(!pryanikFoodPhotoReady||!pryanikFoodPhoto.naturalWidth){drawVetSolutionPack(cx,cy);return;}
  ctx.save();ctx.translate(cx,cy);
- ctx.shadowColor='#382b1b77';ctx.shadowBlur=3;ctx.shadowOffsetY=2;
- ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
- ctx.drawImage(pryanikFoodPhoto,-19,-19,38,38);
+ ctx.shadowColor='#26211c88';ctx.shadowBlur=2.5;ctx.shadowOffsetY=1.4;
+ const rim=ctx.createLinearGradient(-19,-19,19,19);
+ rim.addColorStop(0,'#60666a');rim.addColorStop(.22,'#f7f8f4');rim.addColorStop(.49,'#949b9d');rim.addColorStop(.72,'#f7f8f5');rim.addColorStop(1,'#777e80');
+ ctx.fillStyle=rim;ctx.beginPath();ctx.roundRect(-19,-19,38,38,7);ctx.fill();
+ ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.fillStyle='#5f6569';ctx.beginPath();ctx.roundRect(-16.8,-16.8,33.6,33.6,5.6);ctx.fill();
+ ctx.fillStyle='#fffefa';ctx.beginPath();ctx.roundRect(-15.5,-15.5,31,31,4.7);ctx.fill();
+ // The brand and distinctive label bands are intentionally oversized.
+ ctx.textAlign='center';ctx.textBaseline='alphabetic';
+ ctx.fillStyle='#080d34';ctx.font='bold 12.4px Arial,sans-serif';ctx.fillText('monge',0,-5.7);
+ ctx.fillStyle='#11183b';ctx.font='bold 6.3px Arial,sans-serif';ctx.fillText('VetSolution',0,0.5);
+ ctx.fillStyle='#390716';ctx.beginPath();ctx.roundRect(-14.5,2.4,29,8.3,1.3);ctx.fill();
+ ctx.fillStyle='#fff';ctx.font='bold 5.5px Arial,sans-serif';ctx.fillText('GASTRO',0,8.6);
+ ctx.fillStyle='#ffa600';ctx.beginPath();ctx.roundRect(-1.5,11,15.8,5.1,.5);ctx.fill();
+ ctx.fillStyle='#101126';ctx.font='bold 5.4px Arial,sans-serif';ctx.fillText('EGGS',6.5,15.1);
+ ctx.fillStyle='#e2a33d';ctx.beginPath();ctx.arc(-10.2,13.4,2.4,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#fff5e2';ctx.beginPath();ctx.arc(-6.3,13.2,2.2,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#ffffffa8';ctx.lineWidth=.7;ctx.beginPath();ctx.roundRect(-18,-18,36,36,6.5);ctx.stroke();
  ctx.restore();
 }
 function drawVetSolutionPack(cx,cy){
