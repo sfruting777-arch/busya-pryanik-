@@ -238,7 +238,7 @@ const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=do
 function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
 function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 function laugh(){beep(290,.11,'sawtooth',.055);setTimeout(()=>beep(410,.13,'sawtooth',.055),140);setTimeout(()=>beep(310,.14,'sawtooth',.055),310)}
-function start(h){cachedGarden();openAudio();cameraReady=false;visualReady=false;visualTime=0;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
+function start(h){cachedGarden();openAudio();joystickMode=true;joyHeld=false;cameraReady=false;visualReady=false;visualTime=0;hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
 function back(){over=true;document.getElementById('game').style.display='none';document.getElementById('menu').style.display='block'}function togglePause(){paused=!paused;status.textContent=paused?'Пауза':'Вперёд!'}
 function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(obj.x+dx,obj.y+dy)){obj.x+=dx;obj.y+=dy;return true}return false}
 const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -259,7 +259,7 @@ function randomPatrolTarget(){
  return spots[Math.floor(Math.random()*spots.length)]||{x:13,y:13};
 }
 
-let px=1,py=1, playerDirection=[0,0], requestedDirection=[0,0], previousFrame=0, secondaryJoyDir=[0,0], pendingTurn=[0,0],pendingTurnUntil=0;
+let px=1,py=1, playerDirection=[0,0], requestedDirection=[0,0], previousFrame=0, secondaryJoyDir=[0,0], pendingTurn=[0,0],pendingTurnUntil=0, joystickMode=true,joyHeld=false;
 function chase(){
  const now=performance.now();
  const playerTile={x:Math.round(px),y:Math.round(py)};
@@ -331,7 +331,7 @@ function collectAlongPath(ax,ay,bx,by){
  }
 }
 function update(dt){
- if(over||paused)return;
+ if(over||paused||(joystickMode&&!joyHeld))return;
  let remaining=Math.min(dt,.05)*PLAYER_TILES_PER_SECOND;
  const EPS=.000001;
  // Movement proceeds exactly from one tile centre to the next.
@@ -399,7 +399,7 @@ function refreshStatus(){
 function dog(x,y,isBusya){
  const X=x*40+20,Y=y*40+20,t=performance.now()/1000;
  const isPlayer=isBusya===(hero==='busya');
- const moving=isPlayer?(playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused:!over&&!paused;
+ const moving=isPlayer?(playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused&&(!joystickMode||joyHeld):!over&&!paused;
  const gait=moving?Math.sin(t*12+(isBusya?0:1)):0;
  const sway=moving?Math.sin(t*6)*.022:Math.sin(t*2)*.012;
  const bounce=moving?Math.abs(Math.sin(t*12))*.75:Math.sin(t*2.4)*.4;
@@ -681,7 +681,7 @@ function frame(t){
  draw(1);
  requestAnimationFrame(frame);
 }
-document.addEventListener('keydown',e=>{let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key];if(d){queuedDir=[...d];dir=[...d];e.preventDefault()}});document.querySelectorAll('[data-d]').forEach(b=>{let d=b.dataset.d.split(',').map(Number);b.addEventListener('pointerdown',e=>{e.preventDefault();dir=d});b.addEventListener('pointerup',()=>{dir=[0,0]});b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointercancel',()=>{dir=[0,0]})});
+document.addEventListener('keydown',e=>{let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key];if(d){joystickMode=false;queuedDir=[...d];dir=[...d];e.preventDefault()}});document.querySelectorAll('[data-d]').forEach(b=>{let d=b.dataset.d.split(',').map(Number);b.addEventListener('pointerdown',e=>{e.preventDefault();dir=d});b.addEventListener('pointerup',()=>{dir=[0,0]});b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointercancel',()=>{dir=[0,0]})});
 const ENEMY_STEP_MS=240;
 const joy=document.getElementById('joystick'),stick=document.getElementById('stick');let joyPointer=null,joyOrigin=null;
 function joyMove(e){
@@ -706,8 +706,8 @@ function joyMove(e){
  queuedDir=[...next];
  dir=[...next];
 }
-joy.addEventListener('pointerdown',e=>{e.preventDefault();if(joyPointer!==null)return;joyPointer=e.pointerId;joyOrigin={x:e.clientX,y:e.clientY};joy.classList.add('joy-active');joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener('pointerdown',e=>{e.preventDefault();if(joyPointer!==null)return;joyPointer=e.pointerId;joystickMode=true;joyHeld=true;joyOrigin={x:e.clientX,y:e.clientY};joy.classList.add('joy-active');joy.setPointerCapture(e.pointerId);joyMove(e)});
 joy.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer){e.preventDefault();joyMove(e)}});
-function joyEnd(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joyOrigin=null;joy.classList.remove('joy-active');dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;stick.style.transform='translate(-50%,-50%)'}
+function joyEnd(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joyOrigin=null;joyHeld=false;joy.classList.remove('joy-active');dir=[0,0];queuedDir=[0,0];secondaryJoyDir=[0,0];pendingTurn=[0,0];pendingTurnUntil=0;stick.style.transform='translate(-50%,-50%)'}
 joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);joy.addEventListener('lostpointercapture',joyEnd);joy.addEventListener('contextmenu',e=>e.preventDefault());
 </script></html>
