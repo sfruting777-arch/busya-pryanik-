@@ -1,0 +1,178 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Пряник 3D — тест бега</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Пряник 14.0 • новая пушистая модель · походка v12</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 PRYANIK 14.0<br>Новая внешность<br>Походка v12 без изменений</div><div id="error"></div><script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+try{
+const scene=new THREE.Scene();scene.background=new THREE.Color('#b9d9ca');scene.fog=new THREE.Fog('#b9d9ca',18,35);
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.getElementById('scene').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xfff7e9,0x668c78,2));const sun=new THREE.DirectionalLight(0xffefcc,3);sun.position.set(-5,10,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-13;sun.shadow.camera.right=13;sun.shadow.camera.top=13;sun.shadow.camera.bottom=-13;scene.add(sun);
+const mat=(c,r=1)=>new THREE.MeshStandardMaterial({color:c,roughness:r});const grass=mat('#74a86a'),path=mat('#ebd4a4'),fur=mat('#b66a36'),furLight=mat('#d78c4c'),furDark=mat('#8b4d2b'),cream=mat('#eee1c4'),nose=mat('#2a201b'),eye=mat('#17100f',.3),pink=mat('#d38e84'),hedge=mat('#3e854a');
+function mesh(parent,geo,m,x=0,y=0,z=0){const a=new THREE.Mesh(geo,m);a.position.set(x,y,z);a.castShadow=true;a.receiveShadow=true;parent.add(a);return a}
+function ball(p,m,x,y,z,sx,sy,sz){const o=mesh(p,new THREE.SphereGeometry(1,14,12),m,x,y,z);o.scale.set(sx,sy,sz);return o}
+const ground=mesh(scene,new THREE.PlaneGeometry(200,200),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+mesh(scene,new THREE.BoxGeometry(12,.035,12),path,0,.018,0).receiveShadow=true;
+const stones=mat('#e5c58e');for(let i=0;i<85;i++){let x=Math.sin(i*19.7)*5.5,z=Math.cos(i*11.3)*5.5;ball(scene,stones,x,.035,z,.04,.015,.025)}
+const shrub=(x,z,r=1)=>{ball(scene,hedge,x,.48*r,z,.55*r,.5*r,.5*r);ball(scene,mat('#58a35a'),x-.27*r,.67*r,z+.13*r,.3*r,.32*r,.28*r)};
+for(let i=0;i<13;i++){let a=i*Math.PI*2/13;shrub(Math.cos(a)*7.4,Math.sin(a)*7.4,.85)}
+
+const dog=new THREE.Group();scene.add(dog);
+const body=new THREE.Group();dog.add(body);
+// Full character rebuild: plush apricot maltipoo, sculpted face, knitted jumper.
+const apricot=mat('#c87839',.94),honey=mat('#e7a35c',.95),gold=mat('#d68a48',.96),
+ amber=mat('#b66c35',.98),muzzle=mat('#efb878',.98),ivory=mat('#f2d7a8'),
+ sweater=mat('#e7d5b5',.96),knitDark=mat('#c6a981',.98),ink=mat('#342117',.35),
+ shine=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.16,emissive:'#ffffff',emissiveIntensity:.18});
+const ell=(p,m,x,y,z,rx,ry,rz)=>ball(p,m,x,y,z,rx,ry,rz);
+function tuft(p,m,x,y,z,rx,ry,rz,twist=0){
+ const o=ell(p,m,x,y,z,rx,ry,rz);o.rotation.z=twist;return o;
+}
+// Silhouette: short compact torso, broad rounded rump, little chest.
+ell(body,apricot,0,.95,-.23,.42,.42,.67);
+ell(body,honey,0,.91,.32,.34,.38,.33);
+ell(body,sweater,0,1.035,-.27,.445,.39,.49);
+ell(body,sweater,0,1.025,.12,.415,.39,.29);
+// Real collar, cuffs and hem: ring stitches rather than flat decals.
+const collar=mesh(body,new THREE.CylinderGeometry(.335,.37,.20,28),sweater,0,1.23,.37);
+collar.rotation.x=Math.PI/2;
+for(let i=0;i<26;i++){
+ const t=i*Math.PI*2/26;
+ ell(body,i%3?knitDark:sweater,Math.cos(t)*.425,.80+Math.sin(t)*.26,-.67,.026,.032,.035);
+}
+for(let i=0;i<22;i++){
+ const t=i*Math.PI*2/22;
+ ell(body,i%4?knitDark:sweater,Math.cos(t)*.352,1.13+Math.sin(t)*.12,.39,.024,.035,.025);
+}
+// Fine ribbed cable-knit loops across the sweater sides.
+for(const side of [-1,1])for(let i=0;i<4;i++){
+ const z=-.53+i*.21;
+ for(let j=0;j<6;j++){
+  const t=j*Math.PI/5;
+  tuft(body,i%2?knitDark:sweater,side*(.423+.004*Math.sin(t)),.85+j*.065,z,.018,.028,.026,side*.3);
+ }
+}
+// Embroidered PRYANIK patch on upper back.
+const nameCanvas=document.createElement('canvas');nameCanvas.width=512;nameCanvas.height=220;
+const nc=nameCanvas.getContext('2d');nc.fillStyle='#ebd7b5';nc.fillRect(0,0,512,220);
+nc.strokeStyle='#b99b74';nc.lineWidth=10;nc.strokeRect(9,9,494,202);
+nc.fillStyle='#513521';nc.font='bold 70px system-ui';nc.textAlign='center';nc.fillText('PRYANIK',256,95);
+nc.font='72px system-ui';nc.fillText('🐾',256,181);
+const nameTexture=new THREE.CanvasTexture(nameCanvas);nameTexture.colorSpace=THREE.SRGBColorSpace;
+const namePlate=new THREE.Mesh(new THREE.PlaneGeometry(.65,.28),new THREE.MeshBasicMaterial({map:nameTexture,side:THREE.DoubleSide}));
+namePlate.rotation.x=-Math.PI/2;namePlate.position.set(0,1.438,-.27);body.add(namePlate);
+// Head is a continuous fluffy teddy-bear silhouette, not dotted beads.
+const head=new THREE.Group();head.position.set(0,1.40,.53);body.add(head);
+ell(head,honey,0,.045,.065,.465,.435,.425);
+ell(head,apricot,0,.19,-.045,.455,.355,.37);
+ell(head,honey,0,-.15,.23,.38,.275,.32);
+const ears=[];
+for(const side of [-1,1]){
+ const ear=new THREE.Group();ear.position.set(side*.39,.19,.025);head.add(ear);
+ tuft(ear,apricot,side*.075,-.125,.015,.235,.335,.245,side*.20);
+ tuft(ear,honey,side*.095,-.20,.115,.195,.235,.20,side*.18);
+ for(let i=0;i<16;i++){
+  const t=i*2.399963,rad=Math.sqrt((i+.5)/16);
+  tuft(ear,i%3?honey:gold,side*(.07+Math.cos(t)*.17*rad),-.13+Math.sin(t)*.23*rad,.18,.060,.095,.065,side*.28);
+ }
+ ears.push(ear);
+}
+// Rounded puffy muzzle and cheek pads.
+for(const side of [-1,1]){
+ ell(head,honey,side*.27,-.095,.27,.20,.22,.205);
+ ell(head,muzzle,side*.128,-.155,.405,.183,.155,.20);
+ ell(head,ink,side*.205,.095,.431,.092,.102,.059);
+ ell(head,shine,side*.229,.132,.487,.028,.031,.015);
+ ell(head,shine,side*.177,.077,.484,.011,.012,.009);
+ // Raised brows and forehead fluff.
+ tuft(head,gold,side*.205,.258,.335,.155,.067,.105,side*.15);
+}
+ell(head,ink,0,-.112,.605,.112,.086,.082);
+ell(head,shine,-.03,-.075,.669,.024,.013,.008);
+ell(head,amber,0,-.238,.514,.018,.056,.012);
+ell(head,ivory,0,-.285,.425,.135,.060,.092);
+// Layered organic curls: overlap the silhouette in varied sizes and orientations.
+for(let i=0;i<145;i++){
+ const t=i*2.399963, y=.03+((i*43)%149)/149*.67;
+ const ring=Math.sqrt(Math.max(.05,1-Math.pow((y-.36)/.40,2)));
+ const x=Math.cos(t)*.463*ring,z=Math.sin(t)*.39*ring;
+ const m=i%5===0?apricot:i%4===0?gold:honey;
+ const size=.055+(i%7)*.007;
+ tuft(head,m,x,y-.105,z+.065,size,size*(1.05+i%3*.1),size*.8,Math.sin(t)*.55);
+}
+// Fluffy throat and chest spilling out of collar.
+for(let i=0;i<38;i++){
+ const t=i*2.399963,r=Math.sqrt((i+.5)/38);
+ tuft(body,i%4?honey:gold,Math.cos(t)*.30*r,.94+Math.sin(t)*.26*r,.53,.07,.10,.08,Math.cos(t)*.3);
+}
+// Four solid legs, same v12 swing pivots and motion, but plush tapered shapes.
+const legs=[];
+for(const x of [-.28,.28])for(const z of [-.62,.45]){
+ const pivot=new THREE.Group();pivot.position.set(x,.72,z);body.add(pivot);
+ ell(pivot,apricot,0,-.17,0,.19,.265,.205);
+ ell(pivot,honey,0,-.40,.015,.165,.22,.18);
+ ell(pivot,honey,0,-.605,.115,.205,.135,.265);
+ for(let j=0;j<19;j++){
+  const t=j*2.399963,rr=Math.sqrt((j+.5)/19);
+  const h=-.18-rr*.36;
+  tuft(pivot,j%4?gold:honey,Math.cos(t)*.16*rr,h,Math.sin(t)*.15*rr,.055,.08,.06,Math.cos(t)*.3);
+ }
+ legs.push(pivot);
+}
+// Big curled feather-duster tail, made of a curved chain and a dense plume.
+const tail=new THREE.Group();tail.position.set(0,1.06,-.84);body.add(tail);
+for(let i=0;i<8;i++){
+ const t=i/7,arc=t*Math.PI*.95;
+ ell(tail,i%2?gold:honey,0,.12+Math.sin(arc)*.36+t*.14,-.10-t*.33+Math.cos(arc)*.10,.15+t*.065,.16+t*.055,.16+t*.06);
+}
+for(let i=0;i<55;i++){
+ const t=i*2.399963,r=Math.sqrt((i+.5)/55);
+ tuft(tail,i%4===0?apricot:i%3?gold:honey,Math.cos(t)*.29*r,.55+Math.sin(t)*.29*r,-.46+.08*Math.cos(t),.075,.105,.085,Math.sin(t)*.6);
+}
+const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
+let vx=0,vz=0,angle=0,phase=0;const joy=document.getElementById('joy'),thumb=document.getElementById('thumb');let active=null;const input={x:0,y:0};
+function move(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy),range=43,clamp=Math.min(1,dist/range);input.x=dist>7?dx/dist*clamp:0;input.y=dist>7?dy/dist*clamp:0;thumb.style.transform='translate('+input.x*range+'px,'+input.y*range+'px)'}
+function resetJoy(){active=null;input.x=0;input.y=0;thumb.style.transform='translate(0,0)'}
+/* iOS Safari: handle touch natively and suppress its text loupe, long-press and zoom. */
+let touchId=null;
+joy.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();if(touchId!==null)return;const t=e.changedTouches[0];touchId=t.identifier;move(t)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){move(t);break}}},{passive:false});
+function endTouch(e){e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){touchId=null;resetJoy();break}}}
+joy.addEventListener('touchend',endTouch,{passive:false});joy.addEventListener('touchcancel',endTouch,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();active=e.pointerId;joy.setPointerCapture(active);move(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;if(e.pointerId===active){e.preventDefault();move(e)}});
+function release(e){if(e.pointerType==='touch')return;e.preventDefault();if(e.pointerId!==active)return;resetJoy()}
+joy.addEventListener('pointerup',release);joy.addEventListener('pointercancel',release);
+document.addEventListener('touchstart',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchend',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
+document.addEventListener('selectstart',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>e.preventDefault());
+const keys=new Set();addEventListener('keydown',e=>keys.add(e.key.toLowerCase()));addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+const clock=new THREE.Clock();let elapsed=0;
+function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+let ix=input.x,iz=input.y;if(keys.size){ix=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));iz=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'))}
+const length=Math.hypot(ix,iz);if(length>1){ix/=length;iz/=length}
+const response=1-Math.exp(-dt*12);vx+=(ix*3.2-vx)*response;vz+=(iz*3.2-vz)*response;
+dog.position.x=THREE.MathUtils.clamp(dog.position.x+vx*dt,-5.55,5.55);dog.position.z=THREE.MathUtils.clamp(dog.position.z+vz*dt,-5.55,5.55);
+const speed=Math.hypot(vx,vz);if(speed>.12){const target=Math.atan2(vx,vz);angle+=Math.atan2(Math.sin(target-angle),Math.cos(target-angle))*(1-Math.exp(-dt*13))}
+dog.rotation.y=angle;
+// Natural four-paw cycle: planted paws move backward relative to the body;
+// during recovery the paw lifts, swings forward and settles gently.
+// The diagonal pairs alternate at a walk; faster motion has a light bound.
+phase+=dt*(5+speed*4);const amp=Math.min(1,speed/2.3);
+for(let i=0;i<4;i++)legs[i].rotation.x=Math.sin(phase+(i===0||i===3?0:Math.PI))*.52*amp;
+body.position.y=Math.abs(Math.sin(phase*1.05))*.025*amp;
+body.rotation.z=Math.sin(phase*.5)*.020*amp;
+body.rotation.x=Math.sin(phase)*.013*amp;
+head.rotation.z=Math.sin(phase*.5+.4)*.028*amp;
+head.rotation.x=Math.sin(phase+.7)*.019*amp;
+ears[0].rotation.z=Math.sin(phase+.3)*.068*amp;
+ears[1].rotation.z=-Math.sin(phase+.3)*.068*amp;
+tail.rotation.z=Math.sin(elapsed*5)*.23;tail.rotation.x=Math.sin(elapsed*3.3)*.1;
+shadow.position.set(dog.position.x,.047,dog.position.z);
+const desired=new THREE.Vector3(dog.position.x,8.4,dog.position.z+11.5);camera.position.lerp(desired,1-Math.exp(-dt*3.7));camera.lookAt(dog.position.x,0.7,dog.position.z);
+renderer.render(scene,camera)}
+camera.position.set(0,8.4,11.5);frame();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+}catch(e){const el=document.getElementById('error');el.style.display='block';el.textContent='Не удалось загрузить 3D: '+e.message;console.error(e)}
+</script></body></html>
