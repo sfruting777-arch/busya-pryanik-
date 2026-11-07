@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Пряник 3D — тест бега</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Первый тест объёма, поворотов и бега</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🧶 PRYANIK<br>360° • 4 лапы<br>Прототип модели</div><div id="error"></div><script type="module">
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Пряник 3D — тест бега</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Пряник 2.0 • кудряшки, свитер и живой бег</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 PRYANIK 2.0<br>Кудряшки • свитер<br>Живая походка</div><div id="error"></div><script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 try{
 const scene=new THREE.Scene();scene.background=new THREE.Color('#b9d9ca');scene.fog=new THREE.Fog('#b9d9ca',18,35);
@@ -19,15 +19,44 @@ ball(body,fur,0,.91,-.19,.44,.47,.76);
 ball(body,cream,0,.86,.37,.36,.38,.3);
 const sweater=mat('#dfc8a3');ball(body,sweater,0,1.03,-.19,.46,.43,.53);
 const collar=mesh(body,new THREE.CylinderGeometry(.33,.36,.23,20),sweater,0,1.13,.37);collar.rotation.x=Math.PI/2;
-const patch=mat('#9d714a');const label=mesh(body,new THREE.BoxGeometry(.38,.02,.17),patch,0,1.47,-.24);label.rotation.x=-.1;
+// Raised knitted nameplate on the back, legible from the following camera.
+const nameCanvas=document.createElement('canvas');nameCanvas.width=512;nameCanvas.height=192;
+const nc=nameCanvas.getContext('2d');nc.fillStyle='#f6e5c8';nc.fillRect(0,0,512,192);
+nc.strokeStyle='#b18a65';nc.lineWidth=13;nc.strokeRect(9,9,494,174);
+nc.fillStyle='#785338';nc.font='bold 65px system-ui,sans-serif';nc.textAlign='center';nc.textBaseline='middle';nc.fillText('PRYANIK',256,99);
+const nameTexture=new THREE.CanvasTexture(nameCanvas);nameTexture.colorSpace=THREE.SRGBColorSpace;
+const namePlate=new THREE.Mesh(new THREE.PlaneGeometry(.62,.23),new THREE.MeshBasicMaterial({map:nameTexture,side:THREE.DoubleSide}));
+namePlate.rotation.x=-Math.PI/2;namePlate.position.set(0,1.468,-.22);body.add(namePlate);
+const hem=mesh(body,new THREE.TorusGeometry(.42,.035,7,24),mat('#c8a880'),0,.78,-.27);hem.rotation.x=Math.PI/2;
 const head=new THREE.Group();head.position.set(0,1.38,.55);body.add(head);
 ball(head,furLight,0,.08,.1,.43,.4,.4);
-ball(head,fur, -.43,.04,.02,.23,.32,.22);ball(head,fur,.43,.04,.02,.23,.32,.22);
+const ears=[];
+for(const side of [-1,1]){
+ const ear=new THREE.Group();ear.position.set(side*.41,.12,.025);head.add(ear);
+ const shape=ball(ear,fur,side*.06,-.08,0,.25,.32,.24);shape.rotation.z=side*.19;
+ for(let i=0;i<8;i++){const a=i*2.399;const rr=.11+.075*Math.sqrt(i/8);ball(ear,i%3?fur:furLight,side*.05+Math.cos(a)*rr,-.12+Math.sin(a)*rr,.17,.075,.085,.075)}
+ ears.push(ear);
+}
 ball(head,furLight,0,-.1,.41,.28,.23,.22);
 ball(head,cream,0,-.24,.5,.18,.095,.11);
 ball(head,nose,0,-.09,.61,.105,.08,.08);
 for(const k of [-1,1]){ball(head,eye,k*.205,.13,.444,.084,.095,.045);ball(head,mat('#ffffff',.1),k*.205-.022,.166,.484,.022,.022,.015);ball(head,furLight,k*.18,.34,.25,.21,.12,.18)}
-const legs=[];for(const x of [-.28,.28])for(const z of [-.62,.45]){const pivot=new THREE.Group();pivot.position.set(x,.72,z);body.add(pivot);ball(pivot,furLight,0,-.31,0,.17,.36,.18);ball(pivot,furLight,0,-.6,.11,.19,.12,.24);legs.push(pivot)}
+// Small clustered curls follow the silhouette; limited count for iPhone performance.
+const curlMat=[fur,furLight,furDark];
+for(let i=0;i<82;i++){
+ const theta=i*2.399963,yy=((i*37)%83)/83;
+ const h=.06+yy*.62;
+ const ring=Math.sqrt(Math.max(0,1-Math.pow((h-.39)/.44,2)));
+ const x=Math.cos(theta)*.445*ring,z=Math.sin(theta)*.39*ring;
+ const tuft=ball(head,curlMat[i%3],x,h-.19,z+.04,.068+(i%4)*.006,.065,.071);
+}
+for(let i=0;i<62;i++){
+ const theta=i*2.399963,zz=-.77+(i/61)*1.12;
+ const x=Math.cos(theta)*.45,y=1.02+Math.sin(theta)*.41;
+ if(y>1.36||y<.76)continue;
+ ball(body,i%4===0?furLight:fur,x,y,zz,.055,.064,.064);
+}
+const legs=[];for(const x of [-.28,.28])for(const z of [-.62,.45]){const pivot=new THREE.Group();pivot.position.set(x,.72,z);body.add(pivot);ball(pivot,furLight,0,-.31,0,.17,.36,.18);ball(pivot,furLight,0,-.6,.11,.19,.12,.24);legs.push(pivot);for(let j=0;j<7;j++){const a=j*2.4;ball(pivot,j%3===0?fur:furLight,Math.cos(a)*.12,-.34+Math.sin(a)*.18,.13,.055,.07,.055)}}
 const tail=new THREE.Group();tail.position.set(0,1.08,-.85);body.add(tail);const stem=ball(tail,furLight,0,.24,-.17,.16,.36,.16);stem.rotation.x=-.65;ball(tail,furLight,0,.54,-.36,.25,.23,.27);
 const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
 let vx=0,vz=0,angle=0,phase=0;const joy=document.getElementById('joy'),thumb=document.getElementById('thumb');let active=null;const input={x:0,y:0};
@@ -43,7 +72,14 @@ dog.position.x=THREE.MathUtils.clamp(dog.position.x+vx*dt,-5.55,5.55);dog.positi
 const speed=Math.hypot(vx,vz);if(speed>.12){const target=Math.atan2(vx,vz);angle+=Math.atan2(Math.sin(target-angle),Math.cos(target-angle))*(1-Math.exp(-dt*13))}
 dog.rotation.y=angle;phase+=dt*(5+speed*4);const amp=Math.min(1,speed/2.3);
 for(let i=0;i<4;i++)legs[i].rotation.x=Math.sin(phase+(i===0||i===3?0:Math.PI))*.52*amp;
-body.position.y=Math.abs(Math.sin(phase))*.045*amp;body.rotation.z=Math.sin(phase*.5)*.035*amp;head.rotation.z=Math.sin(phase*.5+.4)*.045*amp;tail.rotation.z=Math.sin(elapsed*5)*.2;
+body.position.y=Math.abs(Math.sin(phase*1.05))*.035*amp;
+body.rotation.z=Math.sin(phase*.5)*.027*amp;
+body.rotation.x=Math.sin(phase)*.018*amp;
+head.rotation.z=Math.sin(phase*.5+.4)*.038*amp;
+head.rotation.x=Math.sin(phase+.7)*.026*amp;
+ears[0].rotation.z=Math.sin(phase+.3)*.09*amp;
+ears[1].rotation.z=-Math.sin(phase+.3)*.09*amp;
+tail.rotation.z=Math.sin(elapsed*5)*.23;tail.rotation.x=Math.sin(elapsed*3.3)*.1;
 shadow.position.set(dog.position.x,.047,dog.position.z);
 const desired=new THREE.Vector3(dog.position.x,8.4,dog.position.z+11.5);camera.position.lerp(desired,1-Math.exp(-dt*3.7));camera.lookAt(dog.position.x,0.7,dog.position.z);
 renderer.render(scene,camera)}
