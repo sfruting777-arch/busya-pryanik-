@@ -198,7 +198,26 @@ function introMusicNote(){
  if(beat===2)introVoice(introBass[bar]+7,t,.25,'triangle',.022);
  if(beat===0||beat===2)introPerc(t,'kick');else introPerc(t,'hat');
 }
+// Real dog-bark recordings from Wikimedia Commons (Amada44, CC BY-SA 3.0).
+const introBarks=[
+ new Audio('https://upload.wikimedia.org/wikipedia/commons/transcoded/a/a2/Barking_of_a_dog.ogg/Barking_of_a_dog.ogg.mp3'),
+ new Audio('https://upload.wikimedia.org/wikipedia/commons/transcoded/5/58/Barking_of_a_dog_2.ogg/Barking_of_a_dog_2.ogg.mp3')
+];
+introBarks.forEach((a,i)=>{a.preload='none';a.volume=i===0?.30:.20;});
+let introBarkTimers=[];
+function introBark(index){
+ if(introMusicTimer===null)return;
+ const a=introBarks[index];a.pause();a.currentTime=0;a.play().catch(()=>{});
+}
+function scheduleIntroBarks(){
+ introBarkTimers.push(setTimeout(()=>introBark(0),2200));
+ introBarkTimers.push(setTimeout(()=>introBark(1),5800));
+ introBarkTimers.push(setInterval(()=>{
+  introBark(0);introBarkTimers.push(setTimeout(()=>introBark(1),3000));
+ },14000));
+}
 function stopIntroMusic(){
+ introBarkTimers.forEach(id=>{clearTimeout(id);clearInterval(id)});introBarkTimers=[];introBarks.forEach(a=>{a.pause();a.currentTime=0});
  if(introMusicTimer!==null){clearInterval(introMusicTimer);introMusicTimer=null;}
  if(introMusicContext){introMusicContext.close().catch(()=>{});introMusicContext=null;}
  const b=document.getElementById('introMusic');if(b){b.textContent='♫ Включить музыку';b.setAttribute('aria-label','Включить музыку');}
@@ -208,7 +227,7 @@ function toggleIntroMusic(){
  try{
  introMusicContext=new (window.AudioContext||window.webkitAudioContext)();
  introMusicContext.resume();introMusicStep=0;introMusicNote();
- introMusicTimer=setInterval(introMusicNote,introTempo*1000);
+ introMusicTimer=setInterval(introMusicNote,introTempo*1000);scheduleIntroBarks();
  const b=document.getElementById('introMusic');b.textContent='♫ Выключить музыку';b.setAttribute('aria-label','Выключить музыку');
  }catch(e){stopIntroMusic();}
 }
