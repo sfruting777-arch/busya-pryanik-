@@ -244,7 +244,7 @@ function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(o
 const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
 let lastEnemyDir=[0,0];
 let aiMode='patrol',aiTarget=null,aiSeenAt=0,aiStartedAt=0,aiAlertUntil=0,aiSafeUntil=0,aiPatrolSteps=0;
-const AI_GRACE_MS=5500, AI_DETECTION_TILES=4, AI_MEMORY_MS=2800, AI_INVULNERABLE_MS=2000;
+const AI_GRACE_MS=1800, AI_DETECTION_TILES=4, AI_MEMORY_MS=2800, AI_INVULNERABLE_MS=2000;
 function aiReset(){aiMode='patrol';aiTarget=null;aiSeenAt=0;aiStartedAt=performance.now();aiAlertUntil=0;aiSafeUntil=aiStartedAt+AI_GRACE_MS;aiPatrolSteps=0;lastEnemyDir=[0,0]}
 function mazeDistance(from,to){
  const distances=Array.from({length:15},()=>Array(15).fill(Infinity));
@@ -288,7 +288,26 @@ function chase(){
  const pick=good.find(d=>d[0]===lastEnemyDir[0]&&d[1]===lastEnemyDir[1])||good[Math.floor(Math.random()*good.length)];
  prevEnemy={...enemy};move(enemy,...pick);lastEnemyDir=pick;aiPatrolSteps++;
 }
-function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(150,.5,'square',.07);if(lives<=0){over=true;status.textContent='Попался! Попробуй ещё раз 🐾';return}player={x:1,y:1};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];dir=[0,0];queuedDir=[0,0];enemy={x:13,y:13};prevPlayer={...player};prevEnemy={...enemy};aiReset();aiSafeUntil=performance.now()+AI_INVULNERABLE_MS;status.textContent='Ай! Минус одна жизнь!'}
+// Continuous collision detection in tile coordinates. Check the entire segment,
+// not just integer tile centres; this catches dogs crossing between frames.
+const DOG_HIT_RADIUS=.46;
+function nearSegment(px0,py0,ax,ay,bx,by,r=DOG_HIT_RADIUS){
+ const vx=bx-ax,vy=by-ay,den=vx*vx+vy*vy;
+ const t=den>1e-10?Math.max(0,Math.min(1,((px0-ax)*vx+(py0-ay)*vy)/den)):0;
+ return Math.hypot(px0-(ax+t*vx),py0-(ay+t*vy))<=r;
+}
+function enemyVisualPosition(now=performance.now()){
+ const from=prevEnemy||enemy;
+ const f=Math.min(1,Math.max(0,(now-enemyLast)/ENEMY_STEP_MS));
+ return {x:from.x+(enemy.x-from.x)*f,y:from.y+(enemy.y-from.y)*f};
+}
+function checkPlayerContact(ax,ay,bx,by){
+ if(over||performance.now()<aiSafeUntil)return false;
+ const e=enemyVisualPosition();
+ if(nearSegment(e.x,e.y,ax,ay,bx,by)){caught();return true}
+ return false;
+}
+function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(150,.5,'square',.07);if(lives<=0){over=true;status.textContent='Попался! Попробуй ещё раз 🐾';return}player={x:1,y:1};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];dir=[0,0];queuedDir=[0,0];enemy={x:13,y:13};prevPlayer={...player};prevEnemy={...enemy};aiReset();aiSafeUntil=performance.now()+AI_INVULNERABLE_MS;visualReady=false;status.textContent='Ай! Минус одна жизнь!'}
 // Responsive arcade movement: instant reversal, buffered turns and gentle junction snapping.
 // Movement is split at tile centres, so even a slow frame cannot skip a junction.
 const PLAYER_TILES_PER_SECOND=6.0;
@@ -349,6 +368,7 @@ function update(dt){
   px+=dx*travel;py+=dy*travel;
   collectAlongPath(oldX,oldY,px,py);
   if(over)break;
+  if(checkPlayerContact(oldX,oldY,px,py))break;
   remaining-=travel;
   if(travel>=distance-EPS){
    px=Math.round(px);py=Math.round(py);
@@ -358,7 +378,7 @@ function update(dt){
  }
  refreshStatus();
 }
-function enemyUpdate(){if(over||paused)return;chase();if(Math.abs(px-enemy.x)<0.35&&Math.abs(py-enemy.y)<0.35)caught();refreshStatus()}
+function enemyUpdate(){if(over||paused)return;const from=enemyVisualPosition();chase();if(!over&&performance.now()>=aiSafeUntil&&nearSegment(px,py,from.x,from.y,enemy.x,enemy.y))caught();refreshStatus()}
 function refreshStatus(){
  if(over){hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;return}
  const dist=Math.abs(player.x-enemy.x)+Math.abs(player.y-enemy.y);
