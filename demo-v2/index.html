@@ -423,6 +423,22 @@ function dog(x,y,isBusya){
  ctx.restore();
 }
 // Miniature of the player's real Monge VetSolution Gastrointestinal EGGS tray.
+// Busya's real Monge Speciality Line Mini Adult — Lamb with Rice and Potatoes.
+function drawBusyaFoodBag(cx,cy){
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(.035);
+ ctx.shadowColor='#3d2c2577';ctx.shadowBlur=3;ctx.shadowOffsetY=2;
+ ctx.fillStyle='#b6aa99';ctx.beginPath();ctx.roundRect(-12,-16,24,32,3);ctx.fill();
+ ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.fillStyle='#f7f0df';ctx.beginPath();ctx.roundRect(-11,-15,22,29,2);ctx.fill();
+ ctx.fillStyle='#eee7d8';ctx.fillRect(-9,-13,18,2);
+ ctx.fillStyle='#a93c3f';ctx.beginPath();ctx.roundRect(-9,-7,18,8,1);ctx.fill();
+ ctx.fillStyle='#fff5e6';ctx.textAlign='center';ctx.font='bold 4.6px Arial';ctx.fillText('Mini < 10 kg',0,-2);
+ ctx.fillStyle='#243d50';ctx.font='bold 8.1px Arial';ctx.fillText('monge',0,7);
+ ctx.fillStyle='#704a3c';ctx.font='bold 4.4px Arial';ctx.fillText('LAMB',0,11);
+ ctx.fillStyle='#985735';ctx.fillRect(-11,13,22,3);
+ ctx.fillStyle='#f3e1c6';ctx.globalAlpha=.35;ctx.fillRect(-9,-14,3,26);ctx.globalAlpha=1;
+ ctx.restore();
+}
 function drawVetSolutionPack(cx,cy){
  ctx.save();ctx.translate(cx,cy);ctx.rotate(-.045);
  ctx.shadowColor='#3e2a1680';ctx.shadowBlur=3;ctx.shadowOffsetY=2;
@@ -468,7 +484,7 @@ function gardenTile(x,y){
  }
 }
 function draw(alpha=1){ctx.clearRect(0,0,600,600);for(let y=0;y<15;y++)for(let x=0;x<15;x++)gardenTile(x,y);
-for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){drawVetSolutionPack(x*40+20,y*40+20)}else{ctx.fillStyle='#a96b38';for(const [dx,dy,r] of [[-7,-4,5],[6,-6,5],[-1,7,6]]){ctx.beginPath();ctx.arc(x*40+20+dx,y*40+20+dy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e4b078';ctx.lineWidth=1.2;ctx.stroke()}}}const blend=(from,to)=>from+(to-from)*alpha;
+for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){drawVetSolutionPack(x*40+20,y*40+20)}else{drawBusyaFoodBag(x*40+20,y*40+20)}}const blend=(from,to)=>from+(to-from)*alpha;
 dog((prevEnemy?.x??enemy.x)+((enemy.x-(prevEnemy?.x??enemy.x))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),(prevEnemy?.y??enemy.y)+((enemy.y-(prevEnemy?.y??enemy.y))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),hero==='pryanik');
 if(performance.now()<aiAlertUntil&&!over){ctx.font='bold 32px system-ui';ctx.textAlign='center';ctx.fillText('❗',enemy.x*40+20,enemy.y*40-7)}
 dog(px,py,hero==='busya');if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
