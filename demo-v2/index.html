@@ -1,0 +1,285 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><base href="../"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>ДЕМО v2 — Буся против Пряника</title><style>body{margin:0;background:#121329;color:white;font-family:system-ui;text-align:center;touch-action:none}h1{font-size:clamp(22px,5vw,38px);color:#ffcf53;margin:14px 0 3px;text-shadow:2px 3px #8a3c15}p{margin:6px}button{border:0;border-radius:15px;padding:13px 20px;background:#ffcb4d;color:#271b22;font-size:18px;font-weight:800;margin:5px}button:active{transform:scale(.96)}
+button,#pad,canvas{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#pad button{touch-action:none;outline:none;appearance:none;-webkit-appearance:none}
+#pad button:focus{outline:none}#game{display:none}canvas{width:min(96vw,640px);height:auto;border:4px solid #ffa83b;border-radius:12px;background:#27324b}#hud{font-size:17px;margin:8px}#pad{display:grid;grid-template-columns:repeat(3,64px);justify-content:center;gap:4px;margin:10px auto}#pad button{margin:0;padding:12px}#pad .empty{visibility:hidden}.hint{font-size:13px;color:#c8c7d9}#status{min-height:24px;color:#ffe17b;font-weight:bold}#controls{position:relative;z-index:5;display:flex;align-items:center;justify-content:flex-start;gap:28px;pointer-events:auto;margin:12px auto 18px;padding-left:clamp(12px,4vw,30px);box-sizing:border-box}#joystick{width:98px;height:98px;border-radius:50%;background:#a5c6df35;border:3px solid #a5c6df88;box-shadow:0 3px 18px #0008;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;pointer-events:auto}#stick{width:47px;height:47px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(145deg,#b9e6fa,#4987b7);border:3px solid #e4f5ff;box-sizing:border-box;box-shadow:0 3px 12px #0008;pointer-events:none}#pauseButton{pointer-events:auto;font-size:14px;padding:10px 12px;margin:0;background:#ffe39a}#pad{display:none!important}#game{padding-bottom:80px}#field{touch-action:none}html,body{overscroll-behavior:none} 
+#intro{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at center,#554239 0%,#20192d 75%,#121329 100%);isolation:isolate}
+#intro::before{content:"";position:absolute;inset:0;background:url("intro.jpg") center 52%/min(92vw,650px) auto no-repeat;animation:introZoom 9s ease-out both;z-index:-2}
+#intro::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(12,8,28,.48) 0%,transparent 24%,transparent 70%,rgba(12,8,28,.52) 100%);z-index:-1}
+#introContent{height:100%;width:100%;max-width:650px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:max(68px,env(safe-area-inset-top)) 14px max(125px,env(safe-area-inset-bottom));animation:introAppear 1s ease both}
+#introTitle{font-size:clamp(27px,6.8vw,44px);line-height:1.05;letter-spacing:-1px;color:#ffdb69;text-shadow:0 3px 0 #8d401c,0 7px 17px #160d23;text-align:center;font-weight:1000;margin:0}
+#introSubtitle{font-size:clamp(17px,4vw,26px);font-weight:850;color:white;text-shadow:0 3px 9px #10091e;margin:12px 0}
+#introPlay{font-size:clamp(23px,6vw,32px);padding:18px 55px;max-width:90vw;border-radius:30px;border:3px solid #fff2b2;box-shadow:0 8px 0 #8e4c17,0 12px 28px #0009;background:linear-gradient(#fff19c,#ffb928);color:#392117;cursor:pointer;animation:playPulse 2.2s ease-in-out infinite}
+#introFooter{display:none;color:#fff8e9;font-size:clamp(16px,4.1vw,22px);font-weight:650;text-align:center;text-shadow:0 2px 8px #160e24,0 3px 14px #160e24;margin:28px 0 0;padding:8px 12px;border-radius:18px;background:rgba(26,17,37,.40);backdrop-filter:blur(4px)}
+@keyframes introAppear{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes introZoom{from{transform:scale(1.06)}to{transform:scale(1)}}
+@keyframes playPulse{50%{box-shadow:0 8px 0 #8e4c17,0 12px 35px #ffd35b99}}
+@media (prefers-reduced-motion:reduce){#intro::before,#introContent,#introPlay{animation:none}}
+
+/* Подсвеченные кнопки выбора героя */
+#menu .hero-choice{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:12px 22px;margin:12px 6px;border-radius:18px;border:2px solid #ffe8a0;background:linear-gradient(155deg,#ffe891,#ffcb4d 60%,#f5ad32);color:#30201b;font-size:clamp(18px,4.5vw,24px);font-weight:850;box-shadow:0 0 9px #ffd56888,0 0 22px #ffbd3e55,0 5px 0 #9b5b1b;animation:heroGlow 2.8s ease-in-out infinite;cursor:pointer;touch-action:manipulation;transition:filter .2s ease}
+#menu .hero-choice:nth-of-type(2){animation-delay:1.4s}
+#menu .hero-choice:active{transform:scale(.96);filter:brightness(1.1)}
+@keyframes heroGlow{0%,100%{box-shadow:0 0 7px #ffd56877,0 0 16px #ffbd3e44,0 5px 0 #9b5b1b}50%{box-shadow:0 0 14px #ffe596cc,0 0 33px #ffc24799,0 0 48px #ffb22d55,0 5px 0 #9b5b1b}}
+@media(prefers-reduced-motion:reduce){#menu .hero-choice{animation:none}}
+/* Отдельная кнопка под фото, чтобы не закрывать лапки */
+#introContent{padding-bottom:max(105px,env(safe-area-inset-bottom))}
+#introContent>div:last-child{transform:translateY(30px)}
+@media(max-height:740px){#introContent>div:last-child{transform:translateY(12px)}#introPlay{padding:13px 45px}}
+
+/* v2.7: true in-flow portrait and button: never overlap */
+#intro{overflow:auto;align-items:stretch;justify-content:center;background:radial-gradient(ellipse at 50% 45%,#342636,#121329 85%)}
+#intro::before,#intro::after{display:none!important}
+#introContent{width:100%;max-width:650px;min-height:100%;height:auto;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;box-sizing:border-box;padding:clamp(56px,8vh,85px) 14px max(110px,env(safe-area-inset-bottom))!important;animation:introAppear .7s ease both}
+#introContent>div:last-child{transform:none!important}
+.introHeading{flex:0 0 auto;margin-bottom:clamp(15px,3vh,26px)}
+#introTitle{font-size:clamp(23px,6.2vw,40px);line-height:1.12}
+#introSubtitle{margin:10px 0 0}
+.introPortrait{position:relative;isolation:isolate;width:min(100%,470px);line-height:0;overflow:hidden;flex:0 0 auto}
+.introPortrait>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.pryanikBreath,.busyaWarmth{position:absolute;inset:0;pointer-events:none;background-image:url('intro.jpg');background-size:100% 100%;background-repeat:no-repeat;will-change:transform,opacity}
+/* Feathered local overlays; background and faces never morph or jump. */
+.pryanikBreath{-webkit-mask-image:radial-gradient(ellipse 18% 17% at 76% 73%,#000 12%,transparent 100%);mask-image:radial-gradient(ellipse 18% 17% at 76% 73%,#000 12%,transparent 100%);transform-origin:76% 80%;animation:pryanikBreathe 4.2s ease-in-out infinite}
+.busyaWarmth{-webkit-mask-image:radial-gradient(ellipse 14% 10% at 25% 56%,#000 0%,transparent 100%);mask-image:radial-gradient(ellipse 14% 10% at 25% 56%,#000 0%,transparent 100%);filter:brightness(1.05) saturate(1.05);animation:busyaShimmer 6.3s ease-in-out infinite}
+@keyframes pryanikBreathe{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.005);opacity:1}}
+@keyframes busyaShimmer{0%,32%,100%{opacity:0}44%,57%{opacity:.7}68%{opacity:0}}
+#introPlay{position:relative;flex:0 0 auto;margin:18px 0 0!important;transform:none!important;padding:15px 48px;font-size:clamp(22px,5.8vw,31px);max-width:90%;z-index:1}
+@media(max-height:780px){#introContent{padding-top:55px!important}.introPortrait{width:min(100%,390px)}#introPlay{margin-top:16px!important}}
+@media(prefers-reduced-motion:reduce){.pryanikBreath,.busyaWarmth{animation:none!important;display:none}#introPlay{animation:none!important}}
+
+/* v2.8 — centered, larger character choices, safe on small iPhones */
+#menu{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 235px);min-height:calc(100dvh - 235px);box-sizing:border-box;padding:10px 12px 90px}
+#menu .choice-group{width:100%;max-width:570px}
+#menu .choice-group>p{font-size:clamp(21px,5vw,29px);margin:0 0 22px;color:#f6f2ff}
+#menu .choice-buttons{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,24px)}
+#menu .hero-choice{flex:1 1 0;min-width:0;max-width:260px;min-height:74px;box-sizing:border-box;margin:0;padding:13px 8px;font-size:clamp(23px,5.5vw,33px);gap:5px;white-space:nowrap;border-radius:22px}
+@media(max-width:370px){#menu .hero-choice{font-size:clamp(20px,5.3vw,25px);min-height:68px}}
+@media(max-height:680px){#menu{min-height:calc(100dvh - 185px);padding-bottom:40px}}
+
+/* v3.1: character face-off artwork, below the real interactive buttons */
+#menu{min-height:calc(100dvh - 235px);padding:14px 12px 38px;align-items:center}
+#menu .choice-group{max-width:570px}
+#menu .hero-showdown{display:block;width:min(100%,490px);height:auto;max-height:min(46dvh,440px);object-fit:contain;margin:24px auto 0;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;border-radius:14px;mask-image:linear-gradient(to bottom,transparent 0%,black 6%,black 92%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 6%,black 92%,transparent 100%)}
+@media(max-height:740px){#menu{padding-bottom:12px}#menu .hero-showdown{max-height:39dvh;margin-top:15px}}
+
+/* v3.2 — golden paw joystick; original movement logic retained */
+#joystick{width:112px;height:112px;flex:0 0 112px;border-radius:50%;border:3px solid #d9ad67;background:radial-gradient(circle at 38% 30%,#6b536c 0%,#3b334f 58%,#26273f 100%);box-shadow:inset 0 2px 12px #161526aa,0 5px 18px #0007,0 0 17px #ffcc7750;position:relative;touch-action:none;overflow:visible}
+#joystick:before{content:"";position:absolute;inset:12px;border-radius:50%;border:1px dashed #ffdfa057;pointer-events:none}
+#joystick.joy-active{border-color:#ffe4a2;box-shadow:inset 0 2px 12px #161526aa,0 5px 18px #0007,0 0 23px #ffc65a9c}
+#stick{width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 22%,#67526a,#30283f 85%);border:2px solid #ffdda0;box-shadow:0 4px 12px #0008,0 0 12px #ffb84d66;transform:translate(-50%,-50%);transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .15s;will-change:transform;pointer-events:none}
+#joystick.joy-active #stick{transition:box-shadow .15s;box-shadow:0 4px 12px #0008,0 0 19px #ffd36ab0}
+#stick svg{width:49px;height:49px;display:block;filter:drop-shadow(0 1px 2px #70421a80)}
+@media(max-width:370px){#controls{gap:15px}#joystick{width:100px;height:100px;flex-basis:100px}}
+@media(prefers-reduced-motion:reduce){#stick{transition:none}}
+
+/* Cinematic VS v3.3: effects only; gameplay untouched */
+#menu .hero-showdown-stage{position:relative;width:min(100%,490px);margin:24px auto 0;isolation:isolate;overflow:visible}
+#menu .hero-showdown-stage .hero-showdown{width:100%;max-height:min(46dvh,440px);margin:0;display:block;animation:showdownBreath 4.2s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(255,191,76,.34))}
+#menu .vs-halo{position:absolute;pointer-events:none;left:50%;top:49%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,232,120,.40),rgba(255,180,36,.16) 38%,transparent 73%);mix-blend-mode:screen;animation:vsPulse 2.1s ease-in-out infinite}
+#menu .vs-spark{position:absolute;left:50%;top:49%;width:4px;height:4px;border-radius:50%;pointer-events:none;background:#fff4bd;box-shadow:0 0 9px 3px #ffcc56;animation:sparkFly 2.8s ease-out infinite;--sx:0px;--sy:-45px}
+#menu .vs-spark:nth-of-type(2){--sx:-52px;--sy:-32px;animation-delay:.4s}
+#menu .vs-spark:nth-of-type(3){--sx:48px;--sy:-54px;animation-delay:1.1s}
+#menu .vs-spark:nth-of-type(4){--sx:-30px;--sy:53px;animation-delay:1.7s}
+#menu .vs-spark:nth-of-type(5){--sx:65px;--sy:24px;animation-delay:2.2s}
+@keyframes vsPulse{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.78)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.24)}}
+@keyframes showdownBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.018)}}
+@keyframes sparkFly{0%{opacity:0;transform:translate(0,0) scale(.3)}20%{opacity:1}85%{opacity:.8}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.1)}}
+@media(prefers-reduced-motion:reduce){#menu .hero-showdown-stage .hero-showdown,#menu .vs-halo,#menu .vs-spark{animation:none!important}}
+
+/* DEMO ONLY: immersive phone-sized hero-selection scene */
+body:has(#menu:not([style*="display: none"])) > h1,
+body:has(#menu:not([style*="display: none"])) > h1 + p{display:none}
+#menu{position:fixed!important;inset:0;z-index:30;width:100vw;height:100dvh;min-height:100svh;margin:0!important;padding:0!important;overflow:hidden;background:#100c20}
+#menu .choice-group{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0;padding:0 12px max(30px,env(safe-area-inset-bottom));box-sizing:border-box}
+#menu .choice-group>p{position:absolute;top:calc(env(safe-area-inset-top) + 76px);left:0;right:0;z-index:5;margin:0;font-size:clamp(19px,5vw,25px);font-weight:750;color:#fff0c2;text-shadow:0 2px 14px #000,0 0 20px #f7a832}
+#menu .choice-group::before{content:"🐾 Буся против Пряника";position:absolute;top:calc(env(safe-area-inset-top) + 23px);left:0;right:0;z-index:5;font-size:clamp(24px,6vw,37px);font-weight:900;color:#ffcd5d;text-shadow:0 3px 2px #72320b,0 0 20px #000}
+#menu .choice-buttons{position:relative;z-index:6;order:2;width:100%;display:flex;justify-content:center;gap:8px;margin:0!important}
+#menu .hero-choice{flex:1 1 0;min-width:0!important;max-width:280px!important;font-size:clamp(17px,4.6vw,23px)!important;padding:12px 6px!important;margin:0!important;min-height:62px}
+#menu .hero-showdown-stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;transform:none!important;background:radial-gradient(ellipse at center,#563419 0%,#161124 72%,#0b0a18 100%)}
+#menu .hero-showdown-stage::before{content:"";position:absolute;inset:-35px;background:url("../hero_showdown.webp") center/cover no-repeat;filter:blur(25px) brightness(.5) saturate(1.35);transform:scale(1.1)}
+#menu .hero-showdown-stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,#0b0a18bb 0%,transparent 25%,transparent 61%,#0b0a18b0 82%,#0b0a18 100%)}
+#menu .hero-showdown{position:absolute!important;top:50%!important;left:50%!important;width:100%!important;height:auto!important;max-height:74dvh!important;max-width:600px!important;object-fit:contain!important;transform:translate(-50%,-50%)!important;border-radius:0!important;box-shadow:none!important;animation:demoPortraitBreath 4s ease-in-out infinite!important}
+#menu .vs-halo{z-index:3}
+#menu .vs-spark{z-index:4}
+@keyframes demoPortraitBreath{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.035)}}
+@media(max-height:700px){#menu .choice-group>p{top:calc(env(safe-area-inset-top) + 60px)}#menu .choice-group::before{top:calc(env(safe-area-inset-top) + 12px)}#menu .hero-showdown{max-height:69dvh!important}}
+@media(prefers-reduced-motion:reduce){#menu .hero-showdown{animation:none!important}}
+</style><section id="intro" aria-label="Вступительная заставка"><div id="introContent"><div class="introHeading"><div id="introTitle">🐾 Буся против Пряника</div><div id="introSubtitle">БИТВА ЗА MONGE</div></div><div class="introPortrait" aria-label="Семейная фотография с Бусей и Пряником"><img src="intro.jpg" alt="Жена держит Бусю и Пряника" draggable="false"><div class="pryanikBreath" aria-hidden="true"></div><div class="busyaWarmth" aria-hidden="true"></div></div><button id="introPlay" type="button" onclick="enterGame()">🐾 Играть</button></div></section><h1>🐾 Буся против Пряника</h1><p>БИТВА ЗА MONGE</p><section id="menu"><div class="choice-group"><p>Выбери героя:</p><div class="choice-buttons"><button class="hero-choice" onclick="start('pryanik')">🐶 Пряник</button><button class="hero-choice" onclick="start('busya')">🐕 Буся</button></div><div class="hero-showdown-stage"><img class="hero-showdown" src="hero_showdown.webp" alt="Пряник и Буся азартно смотрят друг на друга перед игрой" draggable="false" loading="eager"><div class="vs-halo" aria-hidden="true"></div><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i><i class="vs-spark" aria-hidden="true"></i></div></div></section><section id="game"><div id="hud"></div><canvas id="field" width="600" height="600"></canvas><div id="status"></div><div id="controls"><div id="joystick" aria-label="Джойстик"><div id="stick" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pawGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0ba"/><stop offset=".55" stop-color="#ffd077"/><stop offset="1" stop-color="#e89b44"/></linearGradient></defs><g fill="url(#pawGold)"><ellipse cx="14" cy="22" rx="6.2" ry="9" transform="rotate(-25 14 22)"/><ellipse cx="27" cy="15" rx="6.2" ry="9" transform="rotate(-8 27 15)"/><ellipse cx="41" cy="16" rx="6.2" ry="9" transform="rotate(13 41 16)"/><ellipse cx="52" cy="26" rx="5.8" ry="8.5" transform="rotate(28 52 26)"/><path d="M32 29c-7 0-9 6-13 10-5 5-7 10-4 15 4 7 12 3 17 2 6-1 13 5 18-1 5-6 0-13-5-18-4-4-7-8-13-8Z"/></g></svg></div></div><button id="pauseButton" onclick="togglePause()">⏯ Пауза</button></div><div id="pad"><span class="empty"></span><button data-d="0,-1">▲</button><span class="empty"></span><button data-d="-1,0">◀</button><button onclick="togglePause()">⏯</button><button data-d="1,0">▶</button><span class="empty"></span><button data-d="0,1">▼</button><span class="empty"></span></div><button onclick="back()">Главное меню</button><p class="hint">Положи палец на джойстик и слегка веди в сторону. Разворачивайся мгновенно и заранее выбирай поворот — герой повернёт на ближайшем проходе. Можно использовать WASD. Звук включится после нажатия «Играть».</p></section><script>
+function enterGame(){document.getElementById("intro").style.display="none";}
+
+const map=["###############","#.....#.......#","#.###.#.#####.#","#.#...#.....#.#","#.#.#####.#.#.#","#...#.....#...#","###.#.###.###.#","#...#...#.....#","#.#####.#.###.#","#.....#.#.#...#","#.###.#.#.#.###","#...#...#.#...#","#.#.#####.###.#","#.............#","###############"];
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=document.getElementById('hud'),status=document.getElementById('status');let hero,player,enemy,food,lives,score,paused=false,over=false,won=false,dir=[0,0],queuedDir=[0,0],last=0,enemyClock=0,audio,osc,volume,phase='calm',lastLaugh=0,musicTick=0,prevPlayer=null,prevEnemy=null;
+function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
+function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
+function laugh(){beep(290,.11,'sawtooth',.055);setTimeout(()=>beep(410,.13,'sawtooth',.055),140);setTimeout(()=>beep(310,.14,'sawtooth',.055),310)}
+function start(h){openAudio();hero=h;player={x:1,y:1};enemy={x:13,y:13};lives=3;score=0;paused=false;over=false;won=false;dir=[0,0];queuedDir=[0,0];food=new Set();for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(map[y][x]==='.'&&!(x===1&&y===1)&&!(x===13&&y===13))food.add(x+','+y);food=new Set([...food].filter((_,i)=>i%4===0).slice(0,25));phase='calm';musicTick=0,prevPlayer=null,prevEnemy=null;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';dir=[0,0];stick.style.transform='translate(-50%,-50%)';status.textContent='Собери весь корм и убегай!';last=0;enemyClock=0;enemyLast=0;lastEnemyDir=[0,0];aiReset();prevPlayer={...player};prevEnemy={...enemy};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];previousFrame=0;requestAnimationFrame(frame)}
+function back(){over=true;document.getElementById('game').style.display='none';document.getElementById('menu').style.display='block'}function togglePause(){paused=!paused;status.textContent=paused?'Пауза':'Вперёд!'}
+function valid(x,y){return map[y]?.[x]==='.'}function move(obj,dx,dy){if(valid(obj.x+dx,obj.y+dy)){obj.x+=dx;obj.y+=dy;return true}return false}
+const CARDINAL=[[1,0],[-1,0],[0,1],[0,-1]];
+let lastEnemyDir=[0,0];
+let aiMode='patrol',aiTarget=null,aiSeenAt=0,aiStartedAt=0,aiAlertUntil=0,aiSafeUntil=0,aiPatrolSteps=0;
+const AI_GRACE_MS=5500, AI_DETECTION_TILES=4, AI_MEMORY_MS=2800, AI_INVULNERABLE_MS=2000;
+function aiReset(){aiMode='patrol';aiTarget=null;aiSeenAt=0;aiStartedAt=performance.now();aiAlertUntil=0;aiSafeUntil=aiStartedAt+AI_GRACE_MS;aiPatrolSteps=0;lastEnemyDir=[0,0]}
+function mazeDistance(from,to){
+ const distances=Array.from({length:15},()=>Array(15).fill(Infinity));
+ if(!valid(from.x,from.y)||!valid(to.x,to.y))return Infinity;
+ const q=[[from.x,from.y]];distances[from.y][from.x]=0;
+ for(let i=0;i<q.length;i++){const [x,y]=q[i];if(x===to.x&&y===to.y)return distances[y][x];for(const [dx,dy] of CARDINAL){let nx=x+dx,ny=y+dy;if(valid(nx,ny)&&distances[ny][nx]===Infinity){distances[ny][nx]=distances[y][x]+1;q.push([nx,ny])}}}
+ return Infinity;
+}
+function randomPatrolTarget(){
+ const spots=[];
+ for(let y=1;y<14;y++)for(let x=1;x<14;x++)if(valid(x,y)&&mazeDistance({x,y},player)>=5)spots.push({x,y});
+ return spots[Math.floor(Math.random()*spots.length)]||{x:13,y:13};
+}
+
+let px=1,py=1, playerDirection=[0,0], requestedDirection=[0,0], previousFrame=0;
+function chase(){
+ const now=performance.now();
+ const playerTile={x:Math.round(px),y:Math.round(py)};
+ const distanceToPlayer=mazeDistance(enemy,playerTile);
+ const canDetect=now>=aiSafeUntil&&distanceToPlayer<=AI_DETECTION_TILES;
+ if(canDetect){
+   if(aiMode!=='chase')aiAlertUntil=now+950;
+   aiMode='chase';aiSeenAt=now;aiTarget={...playerTile};
+ }else if(aiMode==='chase'&&now-aiSeenAt>AI_MEMORY_MS){aiMode='search'}
+ if(aiMode==='search'&&aiTarget&&enemy.x===aiTarget.x&&enemy.y===aiTarget.y){aiMode='patrol';aiTarget=null}
+ if(aiMode==='patrol'&&(!aiTarget||(enemy.x===aiTarget.x&&enemy.y===aiTarget.y)||aiPatrolSteps>24)){
+   aiTarget=randomPatrolTarget();aiPatrolSteps=0;
+ }
+ if(!aiTarget)aiTarget=randomPatrolTarget();
+ const target=aiTarget;
+ const queue=[[target.x,target.y]],distance=Array.from({length:15},()=>Array(15).fill(Infinity));
+ distance[target.y][target.x]=0;
+ for(let i=0;i<queue.length;i++){
+  const [x,y]=queue[i];
+  for(const [dx,dy] of CARDINAL){const nx=x+dx,ny=y+dy;if(valid(nx,ny)&&distance[ny][nx]===Infinity){distance[ny][nx]=distance[y][x]+1;queue.push([nx,ny])}}
+ }
+ const options=CARDINAL.filter(([dx,dy])=>valid(enemy.x+dx,enemy.y+dy));
+ if(!options.length)return;
+ const best=Math.min(...options.map(d=>distance[enemy.y+d[1]][enemy.x+d[0]]));
+ const good=options.filter(d=>distance[enemy.y+d[1]][enemy.x+d[0]]===best);
+ const pick=good.find(d=>d[0]===lastEnemyDir[0]&&d[1]===lastEnemyDir[1])||good[Math.floor(Math.random()*good.length)];
+ prevEnemy={...enemy};move(enemy,...pick);lastEnemyDir=pick;aiPatrolSteps++;
+}
+function caught(){if(over||performance.now()<aiSafeUntil)return; lives--;beep(150,.5,'square',.07);if(lives<=0){over=true;status.textContent='Попался! Попробуй ещё раз 🐾';return}player={x:1,y:1};px=1;py=1;playerDirection=[0,0];requestedDirection=[0,0];dir=[0,0];queuedDir=[0,0];enemy={x:13,y:13};prevPlayer={...player};prevEnemy={...enemy};aiReset();aiSafeUntil=performance.now()+AI_INVULNERABLE_MS;status.textContent='Ай! Минус одна жизнь!'}
+// Responsive arcade movement: instant reversal, buffered turns and gentle junction snapping.
+// Movement is split at tile centres, so even a slow frame cannot skip a junction.
+const PLAYER_TILES_PER_SECOND=6.0;
+const TURN_ASSIST_TILES=0.22;
+// Collect when the player's path actually passes close to a pickup centre.
+// This also handles assisted turns that snap past a tile centre.
+function collectAlongPath(ax,ay,bx,by){
+ const radius=0.34;
+ for(const key of [...food]){
+  const [fx,fy]=key.split(',').map(Number);
+  const vx=bx-ax,vy=by-ay;
+  const len2=vx*vx+vy*vy;
+  const t=len2>1e-12?Math.max(0,Math.min(1,((fx-ax)*vx+(fy-ay)*vy)/len2)):0;
+  const nx=ax+t*vx,ny=ay+t*vy;
+  if((fx-nx)**2+(fy-ny)**2>radius*radius)continue;
+  // The player is on a navigable corridor; never collect through a wall.
+  if(!valid(fx,fy))continue;
+  food.delete(key);
+  score++;beep(hero==='pryanik'?660:520,.08);
+  if(!food.size){over=true;won=true;status.textContent='🏆 ПОБЕДА! Весь корм собран! 🐾';return}
+ }
+}
+function update(dt){
+ if(over||paused)return;
+ let remaining=Math.min(dt,0.05)*PLAYER_TILES_PER_SECOND;
+ const EPS=0.00001;
+ for(let steps=0;remaining>EPS&&steps<12;steps++){
+  let cx=Math.round(px),cy=Math.round(py);
+  // Opposite direction is always available along the corridor we just came from.
+  // Never wait for a tile centre before reversing.
+  if((queuedDir[0]||queuedDir[1]) &&
+     queuedDir[0]===-playerDirection[0] && queuedDir[1]===-playerDirection[1] &&
+     (playerDirection[0]||playerDirection[1])){
+    playerDirection=[...queuedDir];
+  }
+  // When approaching an intersection, allow a small snap to its centre.
+  // Only snap when the requested turn actually has an open corridor.
+  const turning=(queuedDir[0]||queuedDir[1]) &&
+     (queuedDir[0]!==playerDirection[0]||queuedDir[1]!==playerDirection[1]);
+  if(turning && valid(cx,cy) && valid(cx+queuedDir[0],cy+queuedDir[1]) &&
+     Math.abs(px-cx)<=TURN_ASSIST_TILES && Math.abs(py-cy)<=TURN_ASSIST_TILES &&
+     (Math.abs(px-cx)>EPS||Math.abs(py-cy)>EPS)){
+    const beforeSnapX=px,beforeSnapY=py;
+    px=cx;py=cy;
+    player.x=cx;player.y=cy;
+    collectAlongPath(beforeSnapX,beforeSnapY,px,py);
+    if(over)break;
+    playerDirection=[...queuedDir];
+  }
+  const atCentre=Math.abs(px-cx)<EPS&&Math.abs(py-cy)<EPS;
+  if(atCentre){
+   px=cx;py=cy;
+   if((queuedDir[0]||queuedDir[1])&&valid(cx+queuedDir[0],cy+queuedDir[1]))playerDirection=[...queuedDir];
+   if(!valid(cx+playerDirection[0],cy+playerDirection[1])){playerDirection=[0,0];break}
+  }
+  if(!playerDirection[0]&&!playerDirection[1])break;
+  // Distance to the next tile centre in the current direction.
+  const axis=playerDirection[0]?'x':'y';
+  const current=axis==='x'?px:py;
+  const sign=axis==='x'?playerDirection[0]:playerDirection[1];
+  const next=atCentre?Math.round(current)+sign:sign>0?Math.ceil(current-EPS):Math.floor(current+EPS);
+  const distance=Math.abs(next-current);
+  const travel=Math.min(remaining,distance);
+  const beforeMoveX=px,beforeMoveY=py;
+  px+=playerDirection[0]*travel;py+=playerDirection[1]*travel;
+  collectAlongPath(beforeMoveX,beforeMoveY,px,py);
+  if(over)break;
+  remaining-=travel;
+  if(travel>=distance-EPS){
+   px=Math.round(px);py=Math.round(py);
+   player.x=px;player.y=py;
+   if(player.x===enemy.x&&player.y===enemy.y){caught();break}
+  }
+ }
+ refreshStatus();
+}
+function enemyUpdate(){if(over||paused)return;chase();if(Math.abs(px-enemy.x)<0.35&&Math.abs(py-enemy.y)<0.35)caught();refreshStatus()}
+function refreshStatus(){
+ if(over){hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;return}
+ const dist=Math.abs(player.x-enemy.x)+Math.abs(player.y-enemy.y);
+ const newPhase=aiMode==='chase'?'danger':aiMode==='search'?'warning':'calm';
+ if(newPhase!==phase){phase=newPhase;status.textContent=phase==='danger'?'⚠️ ОПАСНАЯ БЛИЗОСТЬ!':phase==='warning'?'Кто-то приближается…':'Собирай корм!'}
+ if(++musicTick%(phase==='danger'?2:phase==='warning'?3:5)===0){let melody=phase==='danger'?[330,311,277,247]:phase==='warning'?[392,370,349,330]:[523,659,784,659];beep(melody[Math.floor(musicTick/(phase==='danger'?2:phase==='warning'?3:5))%4],phase==='danger'?.09:.13,phase==='danger'?'triangle':'sine',.014)}
+ if(phase==='danger'&&Date.now()-lastLaugh>3200){laugh();lastLaugh=Date.now()}
+ hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;
+}
+function dog(x,y,isBusya){const px=x*40+20,py=y*40+20;ctx.save();ctx.translate(px,py);ctx.fillStyle=isBusya?'#e3a56a':'#bb6c32';ctx.beginPath();ctx.ellipse(0,2,15,13,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=isBusya?'#eab477':'#ce8749';if(isBusya){ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(-11,-24);ctx.lineTo(-1,-12);ctx.moveTo(12,-7);ctx.lineTo(11,-24);ctx.lineTo(1,-12);ctx.fill()}else{for(let a of [-12,12]){ctx.beginPath();ctx.arc(a,-8,9,0,7);ctx.fill()}}ctx.fillStyle='white';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,3,0,7);ctx.fill()}ctx.fillStyle='#21151c';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,1.7,0,7);ctx.fill()}ctx.beginPath();ctx.arc(0,6,3,0,7);ctx.fill();ctx.fillStyle=isBusya?'#e5453e':'#dfd1b3';ctx.fillRect(-10,12,20,5);ctx.restore()}
+function draw(alpha=1){ctx.clearRect(0,0,600,600);for(let y=0;y<15;y++)for(let x=0;x<15;x++){ctx.fillStyle=map[y][x]==='#'?'#53617e':'#27344a';ctx.fillRect(x*40,y*40,40,40);if(map[y][x]==='#'){ctx.fillStyle='#677f8a';ctx.fillRect(x*40+2,y*40+2,36,7);ctx.fillStyle='#6d9962';ctx.fillRect(x*40+3,y*40+1,34,4)}}for(let key of food){let [x,y]=key.split(',').map(Number);ctx.font='24px system-ui';ctx.textAlign='center';if(hero==='pryanik'){ctx.fillText('🥫',x*40+20,y*40+29)}else{ctx.fillStyle='#a96b38';for(const [dx,dy,r] of [[-7,-4,5],[6,-6,5],[-1,7,6]]){ctx.beginPath();ctx.arc(x*40+20+dx,y*40+20+dy,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e4b078';ctx.lineWidth=1.2;ctx.stroke()}}}const blend=(from,to)=>from+(to-from)*alpha;
+dog((prevEnemy?.x??enemy.x)+((enemy.x-(prevEnemy?.x??enemy.x))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),(prevEnemy?.y??enemy.y)+((enemy.y-(prevEnemy?.y??enemy.y))*Math.min(1,Math.max(0,(performance.now()-enemyLast)/ENEMY_STEP_MS))),hero==='pryanik');
+if(performance.now()<aiAlertUntil&&!over){ctx.font='bold 32px system-ui';ctx.textAlign='center';ctx.fillText('❗',enemy.x*40+20,enemy.y*40-7)}
+dog(px,py,hero==='busya');if(paused||over){ctx.fillStyle='#111b';ctx.fillRect(0,260,600,80);ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.fillText(over?(won?'🏆 ПОБЕДА!':'ИГРА ОКОНЧЕНА'): 'ПАУЗА',300,308)}}
+var enemyLast=0;
+function frame(t){
+ if(document.getElementById('game').style.display==='none')return;
+ if(!previousFrame){previousFrame=t;enemyLast=t}
+ const dt=Math.min((t-previousFrame)/1000,0.05);
+ previousFrame=t;
+ if(!paused&&!over){
+   update(dt);
+   if(!over&&t-enemyLast>=ENEMY_STEP_MS){enemyUpdate();enemyLast=t}
+ }else enemyLast=t;
+ draw(1);
+ requestAnimationFrame(frame);
+}
+document.addEventListener('keydown',e=>{let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key];if(d){queuedDir=[...d];dir=[...d];e.preventDefault()}});document.querySelectorAll('[data-d]').forEach(b=>{let d=b.dataset.d.split(',').map(Number);b.addEventListener('pointerdown',e=>{e.preventDefault();dir=d});b.addEventListener('pointerup',()=>{dir=[0,0]});b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('pointercancel',()=>{dir=[0,0]})});
+const ENEMY_STEP_MS=240;
+const joy=document.getElementById('joystick'),stick=document.getElementById('stick');let joyPointer=null,joyOrigin=null;
+function joyMove(e){
+ const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ const dx=e.clientX-(joyOrigin?.x??cx),dy=e.clientY-(joyOrigin?.y??cy),dist=Math.hypot(dx,dy),max=33,scale=dist>max?max/dist:1;
+ stick.style.transform=`translate(calc(-50% + ${dx*scale}px),calc(-50% + ${dy*scale}px))`;
+ if(dist<3){return} // Tiny accidental thumb movement must not erase a buffered turn.
+ const next=Math.abs(dx)>=Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];
+ queuedDir=[...next];
+ dir=[...next];
+}
+joy.addEventListener('pointerdown',e=>{e.preventDefault();if(joyPointer!==null)return;joyPointer=e.pointerId;joyOrigin={x:e.clientX,y:e.clientY};joy.classList.add('joy-active');joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer){e.preventDefault();joyMove(e)}});
+function joyEnd(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joyOrigin=null;joy.classList.remove('joy-active');dir=[0,0];queuedDir=[0,0];stick.style.transform='translate(-50%,-50%)'}
+joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);joy.addEventListener('lostpointercapture',joyEnd);joy.addEventListener('contextmenu',e=>e.preventDefault());
+</script></html>
