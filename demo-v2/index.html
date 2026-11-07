@@ -233,7 +233,7 @@ function toggleIntroMusic(){
 }
 function enterGame(){stopIntroMusic();document.getElementById("intro").style.display="none";}
 
-const map=["###############","#.....#.......#","#.###.#.#####.#","#.#...#.....#.#","#.#.#####.#.#.#","#...#.....#...#","###.#.###.###.#","#...#...#.....#","#.#####.#.###.#","#.....#.#.#...#","#.###.#.#.#.###","#...#...#.#...#","#.#.#####.###.#","#.............#","###############"];
+const map=["###############","#.............#","#.###.#.#####.#","#.#...#.....#.#","#.#.#####.#.#.#","#...#.....#...#","###.#.###.###.#","#...#...#.....#","#.#####.#.###.#","#.....#.#.#...#","#.###.#.#.#.###","#...#...#.#...#","#.#.#####.###.#","#.............#","###############"];
 const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),hud=document.getElementById('hud'),status=document.getElementById('status');let hero,player,enemy,food,lives,score,paused=false,over=false,won=false,dir=[0,0],queuedDir=[0,0],last=0,enemyClock=0,audio,osc,volume,phase='calm',lastLaugh=0,musicTick=0,prevPlayer=null,prevEnemy=null;
 function openAudio(){try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}}
 function beep(freq,dur=.12,type='sine',gain=.04){if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
@@ -625,11 +625,35 @@ function gardenTile(x,y,ctx){
 }
 // Paint the detailed garden once. Reusing the bitmap avoids thousands of gradients per frame.
 let gardenBitmap=null;
+// Small illustrated shopfronts on the north boundary: collision stays solid hedge.
+// The continuous walkable lane directly below forms a Pac-Man-style market street.
+function drawMarketShop(ctx,x,width,label,kind){
+ const y=2,w=width*40-6,left=x*40+3;
+ ctx.save();ctx.translate(left,y);
+ ctx.shadowColor='#1e3826aa';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+ ctx.fillStyle='#eac997';ctx.beginPath();ctx.roundRect(0,0,w,36,4);ctx.fill();
+ ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.strokeStyle='#855b3c';ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle='#70432f';ctx.fillRect(5,9,w-10,25);
+ ctx.fillStyle='#f7e2b6';ctx.fillRect(8,13,w-16,19);
+ // The striped canopy and clear sign make each stall readable at phone scale.
+ for(let i=0;i<Math.ceil((w-8)/14);i++){
+  ctx.fillStyle=i%2===0?(kind==='meat'?'#a84143':'#397b6b'):'#fff1d9';
+  ctx.fillRect(4+i*14,8,Math.min(14,w-8-i*14),8);
+ }
+ ctx.fillStyle='#54352b';ctx.beginPath();ctx.roundRect(w*.16,0,w*.68,10,2);ctx.fill();
+ ctx.fillStyle='#fff2d7';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 7px system-ui';ctx.fillText(label,w/2,5,w*.62);
+ ctx.font='13px system-ui';ctx.fillText(kind==='meat'?'🍖  🦴  🍖':'🦴  🐾  🦴',w/2,25,w-18);
+ ctx.restore();
+}
 function cachedGarden(){
  if(gardenBitmap)return gardenBitmap;
  const layer=document.createElement('canvas');layer.width=600;layer.height=600;
  const layerContext=layer.getContext('2d');
  for(let yy=0;yy<15;yy++)for(let xx=0;xx<15;xx++)gardenTile(xx,yy,layerContext);
+ drawMarketShop(layerContext,2,4,'МЯСНАЯ ЛАВКА','meat');
+ drawMarketShop(layerContext,9,4,'ЛАКОМСТВА','treats');
  gardenBitmap=layer;
  return gardenBitmap;
 }
