@@ -17,7 +17,22 @@ g.fillStyle='#79ba6a';g.fillRect(0,0,W,W);
 for(let y=miny;y<=maxy;y++)for(let x=minx;x<=maxx;x++){let X=x*S,Y=y*S;if(!blocked(x,y)){roundRect(X-2,Y-2,S+4,S+4,14,(x*13+y*7)%3===0?'#e9c988':'#f3dca6');g.fillStyle='#fff2c655';g.beginPath();g.ellipse(X+18,Y+16,19,7,-.4,0,7);g.fill()}else{roundRect(X+3,Y+3,S-6,S-6,19,'#326b3d');roundRect(X+5,Y+1,S-10,S-10,22,'#4b9850');for(let j=0;j<4;j++){g.fillStyle=j%2?'#76c56d':'#91d879';g.beginPath();g.arc(X+13+(j%2)*25,Y+15+Math.floor(j/2)*26,13,0,7);g.fill()}}}
 for(const f of flowers){if(Math.abs(f.x-cam.x)>390||Math.abs(f.y-cam.y)>390)continue;g.fillStyle='#4e9446';g.fillRect(f.x-1,f.y,2,12);for(let j=0;j<5;j++){let a=j*Math.PI*2/5;g.fillStyle=f.color;g.beginPath();g.arc(f.x+Math.cos(a)*6,f.y+Math.sin(a)*6+Math.sin(t/850+f.x)*1.2,4.5,0,7);g.fill()}g.fillStyle='#ffcd42';g.beginPath();g.arc(f.x,f.y,4,0,7);g.fill()}
 for(const tr of trees){if(Math.abs(tr.x-cam.x)>390||Math.abs(tr.y-cam.y)>390)continue;g.fillStyle='#744e2d';g.fillRect(tr.x-6,tr.y-5,12,34);for(let j=0;j<3;j++){g.fillStyle=['#307c44','#409b4c','#61b65b'][j];g.beginPath();g.arc(tr.x+(j-1)*15,tr.y-17-(j%2)*10,22,0,7);g.fill()}}
- // Landmark pond, gazebo and bridge.
+ // Hidden romantic memorial garden: a placeholder heart, no private wedding photo published.
+g.save();
+const fx=21*S,fy=23*S;
+g.fillStyle='#f6d8c9';g.beginPath();g.ellipse(fx,fy+22,145,112,0,0,Math.PI*2);g.fill();
+g.strokeStyle='#e9aab5';g.lineWidth=12;g.beginPath();g.ellipse(fx,fy+22,145,112,0,0,Math.PI*2);g.stroke();
+for(let j=0;j<12;j++){const a=j*Math.PI/6;const rx=fx+Math.cos(a)*134,ry=fy+22+Math.sin(a)*102;g.fillStyle=j%2?'#f86f9b':'#fff0c5';g.beginPath();g.arc(rx,ry,9,0,Math.PI*2);g.fill()}
+g.fillStyle='#4cadd0';g.beginPath();g.ellipse(fx,fy+34,76,47,0,0,Math.PI*2);g.fill();
+g.strokeStyle='#fff4d0';g.lineWidth=8;g.stroke();
+g.fillStyle='#f9e8c8';g.beginPath();g.ellipse(fx,fy+18,34,17,0,0,Math.PI*2);g.fill();
+g.fillStyle='#e6b75b';g.fillRect(fx-8,fy-39,16,55);
+g.fillStyle='#ffd76e';g.beginPath();g.moveTo(fx,fy-37);g.bezierCurveTo(fx-58,fy-70,fx-37,fy-105,fx,fy-76);g.bezierCurveTo(fx+37,fy-105,fx+58,fy-70,fx,fy-37);g.fill();
+g.strokeStyle='#fff5c0';g.lineWidth=3;g.stroke();
+g.fillStyle='#633b56';g.textAlign='center';g.font='bold 13px system-ui';g.fillText('❤️ НАША ИСТОРИЯ',fx,fy-13);
+g.font='11px system-ui';g.fillText('Скоро здесь будет ваше фото',fx,fy+88);
+g.restore();
+// Landmark pond, gazebo and bridge.
 g.fillStyle='#4c9ac4';g.beginPath();g.ellipse(24*S,10*S,100,70,-.2,0,7);g.fill();g.strokeStyle='#b8e8ef';g.lineWidth=6;g.stroke();
 for(let i=-2;i<=2;i++)roundRect(24*S-54+i*22,10*S-16,18,32,3,'#c58d55');
 roundRect(3*S,24*S,120,80,18,'#a66e43');roundRect(3*S+12,24*S+12,96,56,12,'#f2d9a2');g.fillStyle='#b44f48';g.beginPath();g.moveTo(3*S-15,24*S+12);g.lineTo(3*S+60,24*S-42);g.lineTo(3*S+135,24*S+12);g.fill();
