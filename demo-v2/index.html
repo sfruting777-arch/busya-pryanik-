@@ -380,25 +380,25 @@ function dog(x,y,isBusya){
  const isMoving=isBusya=== (hero==='busya') ? (playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused : !over&&!paused;
  const bounce=isMoving?Math.sin(t*17+(isBusya?0:1))*1.3:Math.sin(t*2.6)*.45;
  const blink=Math.sin(t*.93+(isBusya?1.5:0))>.995?.15:1;
- ctx.save();ctx.translate(X,Y);ctx.scale(1.12,1.12);
+ ctx.save();ctx.translate(X,Y);ctx.scale(1.14,1.14);
  // Ground shadow and little animated feet
  ctx.fillStyle='#27391c55';ctx.beginPath();ctx.ellipse(0,13,15,4,0,0,Math.PI*2);ctx.fill();
  ctx.translate(0,bounce);
  const coat=isBusya?'#efad69':'#c88143',light=isBusya?'#ffcf8f':'#eeb879',dark=isBusya?'#ae633b':'#8d4b2d';
  const pawShift=isMoving?Math.sin(t*17)*2.2:0;
  ctx.fillStyle=dark;
- for(let side of [-1,1]){ctx.beginPath();ctx.ellipse(side*8,11+(side*pawShift),4.2,5.2,side*.13,0,Math.PI*2);ctx.fill()}
+ for(let side of [-1,1]){ctx.beginPath();ctx.ellipse(side*5.5,20+(side*pawShift),4.5,6.5,side*.13,0,Math.PI*2);ctx.fill()}
  // Tail wags behind the body; costume sleeves and moving paws.
  ctx.save();ctx.translate(10,6);ctx.rotate(Math.sin(t*(isMoving?12:4))*.25);
  ctx.strokeStyle=isBusya?'#e9a16d':'#b97845';ctx.lineWidth=5;ctx.lineCap='round';
  ctx.beginPath();ctx.moveTo(0,3);ctx.quadraticCurveTo(10,0,7,-8);ctx.stroke();ctx.restore();
  const fabric=isBusya?'#e74436':'#ddc8a6',shade=isBusya?'#bd282b':'#b49b77';
- ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,6,13.4,12.5,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(-1,5,11.6,11.5,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=isBusya?'#f6b84c':'#f5e5c7';ctx.beginPath();ctx.ellipse(0,5,6.8,9,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=shade;ctx.beginPath();ctx.ellipse(0,10,10.5,15.5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(-1,9,9.4,14,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=isBusya?'#f6b84c':'#f5e5c7';ctx.beginPath();ctx.ellipse(0,9,5.7,11,0,0,Math.PI*2);ctx.fill();
  for(const side of [-1,1]){
-  ctx.save();ctx.translate(side*10,7);ctx.rotate(side*Math.sin(t*17)*.16*(isMoving?1:.18));
-  ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,0,4.5,7,side*.2,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.translate(side*9,6);ctx.rotate(side*Math.sin(t*17)*.16*(isMoving?1:.18));
+  ctx.fillStyle=fabric;ctx.beginPath();ctx.ellipse(0,0,3.5,8,side*.2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=coat;ctx.beginPath();ctx.ellipse(0,5,4.3,3,0,0,Math.PI*2);ctx.fill();ctx.restore();
  }
  // Hood behind the head: red Pooh-inspired hood or soft beige hoodie.
@@ -512,33 +512,56 @@ function drawVetSolutionPack(cx,cy){
  ctx.strokeStyle='#fffefa99';ctx.lineWidth=.7;ctx.beginPath();ctx.roundRect(-15,-15,30,30,5);ctx.stroke();
  ctx.restore();
 }
+// Illustrated storybook garden. Maze topology and collisions are untouched.
 function gardenTile(x,y){
  const X=x*40,Y=y*40,wall=map[y][x]==='#',seed=(x*127+y*263+x*y*17)%97;
+ const rand=n=>((seed*37+n*61+x*17+y*29)%101)/101;
+ ctx.save();
  if(wall){
-  const shadow=ctx.createLinearGradient(X,Y,X,Y+40);shadow.addColorStop(0,'#174c30');shadow.addColorStop(1,'#103b27');
-  ctx.fillStyle=shadow;ctx.fillRect(X,Y,40,40);
-  ctx.fillStyle='#155337';ctx.fillRect(X+3,Y+11,37,29);
-  const foliage=ctx.createRadialGradient(X+15,Y+6,2,X+20,Y+18,31);
-  foliage.addColorStop(0,'#d1f58b');foliage.addColorStop(.48,'#70bb4d');foliage.addColorStop(1,'#237e46');
-  ctx.fillStyle=foliage;ctx.beginPath();ctx.roundRect(X+1,Y+1,38,32,8);ctx.fill();
-  ctx.fillStyle='#20633b';ctx.beginPath();ctx.roundRect(X+4,Y+29,34,8,4);ctx.fill();
-  for(let i=0;i<7;i++){
-   const xx=X+6+((seed+i*17)%29),yy=Y+5+((seed*3+i*11)%24);
-   ctx.fillStyle=i%3===0?'#b8eb71':i%3===1?'#399b50':'#8bd45b';
-   ctx.beginPath();ctx.ellipse(xx,yy,5,3.5,(i%4)*.7,0,7);ctx.fill();
+  // Deep grass underneath rounded, layered flowering hedges.
+  ctx.fillStyle='#548b45';ctx.fillRect(X,Y,40,40);
+  ctx.fillStyle='#244d31';ctx.fillRect(X+1,Y+9,39,31);
+  ctx.fillStyle='#347642';ctx.beginPath();ctx.roundRect(X+1,Y+6,39,32,11);ctx.fill();
+  for(let i=0;i<9;i++){
+   const xx=X+3+rand(i)*35, yy=Y+4+rand(i+23)*27;
+   const leaf=ctx.createRadialGradient(xx-2,yy-2,0,xx,yy,9);
+   leaf.addColorStop(0,i%3===0?'#c8e987':'#8acb64');
+   leaf.addColorStop(.65,i%3===0?'#79b84f':'#48984c');
+   leaf.addColorStop(1,'#286e3b');
+   ctx.fillStyle=leaf;ctx.beginPath();ctx.ellipse(xx,yy,8.5,6.5,rand(i+40)*2,0,Math.PI*2);ctx.fill();
   }
-  ctx.strokeStyle='#e2ffa5';ctx.globalAlpha=.45;ctx.lineWidth=1.3;
-  ctx.beginPath();ctx.moveTo(X+5,Y+7);ctx.quadraticCurveTo(X+18,Y+1,X+30,Y+6);ctx.stroke();ctx.globalAlpha=1;
-  if(seed%7===0||seed%11===0){ctx.font='15px system-ui';ctx.textAlign='center';ctx.fillText(seed%7===0?'🌼':'🌷',X+20,Y+24)}
+  // Small flowering accents, deliberately sparse.
+  if(seed%5===0){const xx=X+10+rand(4)*20,yy=Y+9+rand(9)*13;
+   for(let k=0;k<5;k++){const a=k*Math.PI*2/5;ctx.fillStyle=k%2?'#fff1e2':'#f6a6c1';ctx.beginPath();ctx.arc(xx+Math.cos(a)*3.4,yy+Math.sin(a)*3.4,2.8,0,7);ctx.fill()}
+   ctx.fillStyle='#ffd65c';ctx.beginPath();ctx.arc(xx,yy,2.3,0,7);ctx.fill();
+  }
+  // Hedge lip and soft drop shadow suggest depth.
+  ctx.fillStyle='#1c4e2b66';ctx.fillRect(X,Y+35,40,5);
  }else{
-  const sand=ctx.createLinearGradient(X,Y,X+40,Y+40);
-  sand.addColorStop(0,(x+y)%2?'#fff0bb':'#ffe7aa');sand.addColorStop(1,'#efc77e');
-  ctx.fillStyle=sand;ctx.fillRect(X,Y,40,40);
-  ctx.fillStyle='#fff9d6';ctx.globalAlpha=.42;ctx.beginPath();ctx.ellipse(X+12,Y+10,17,9,-.5,0,7);ctx.fill();ctx.globalAlpha=1;
-  ctx.strokeStyle='#cba97a';ctx.globalAlpha=.23;ctx.lineWidth=.8;ctx.strokeRect(X+.5,Y+.5,39,39);ctx.globalAlpha=1;
-  if(seed%5===0){ctx.fillStyle='#c3a37b';ctx.globalAlpha=.45;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(X+8+(seed+i*11)%26,Y+8+(seed+i*7)%24,1.1,0,7);ctx.fill()}ctx.globalAlpha=1}
-  if(seed%9===0){ctx.fillStyle='#6b9956';ctx.beginPath();ctx.ellipse(X+34,Y+33,3,2,-.4,0,7);ctx.fill()}
+  // Continuous warm stone path without checkerboard seams.
+  ctx.fillStyle='#e9d39c';ctx.fillRect(X,Y,40,40);
+  ctx.fillStyle='#f3e1b5';ctx.fillRect(X,Y,40,40);
+  // Natural stone flecks rather than a tile border.
+  for(let i=0;i<8;i++){
+   const xx=X+rand(i+10)*40,yy=Y+rand(i+40)*40;
+   ctx.fillStyle=i%3===0?'#fff3d4':i%3===1?'#d4b985':'#e6ca95';
+   ctx.globalAlpha=.24+(i%3)*.08;
+   ctx.beginPath();ctx.ellipse(xx,yy,1.2+rand(i+66)*3,1+rand(i+73)*1.7,rand(i+87)*3,0,7);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // Gentle grass edging only where a path actually meets a hedge.
+  for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]){
+   if(map[y+dy]?.[x+dx]!=='#')continue;
+   ctx.strokeStyle='#98b974';ctx.lineWidth=2.8;ctx.globalAlpha=.75;
+   ctx.beginPath();
+   if(dy===-1){ctx.moveTo(X,Y+1.5);ctx.lineTo(X+40,Y+1.5)}
+   if(dy===1){ctx.moveTo(X,Y+38.5);ctx.lineTo(X+40,Y+38.5)}
+   if(dx===-1){ctx.moveTo(X+1.5,Y);ctx.lineTo(X+1.5,Y+40)}
+   if(dx===1){ctx.moveTo(X+38.5,Y);ctx.lineTo(X+38.5,Y+40)}
+   ctx.stroke();ctx.globalAlpha=1;
+  }
  }
+ ctx.restore();
 }
 // Smooth cinematic camera. The 15x15 maze and collision rules stay unchanged.
 const CAMERA_ZOOM=1.34;
