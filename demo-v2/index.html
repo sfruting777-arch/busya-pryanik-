@@ -313,48 +313,41 @@ function collectAlongPath(ax,ay,bx,by){
 }
 function update(dt){
  if(over||paused)return;
- let remaining=Math.min(dt,0.05)*PLAYER_TILES_PER_SECOND;
- const EPS=0.00001;
- for(let steps=0;remaining>EPS&&steps<12;steps++){
-  let cx=Math.round(px),cy=Math.round(py);
-  // Opposite direction is always available along the corridor we just came from.
-  // Never wait for a tile centre before reversing.
-  if((queuedDir[0]||queuedDir[1]) &&
-     queuedDir[0]===-playerDirection[0] && queuedDir[1]===-playerDirection[1] &&
-     (playerDirection[0]||playerDirection[1])){
-    playerDirection=[...queuedDir];
-  }
-  // When approaching an intersection, allow a small snap to its centre.
-  // Only snap when the requested turn actually has an open corridor.
-  const turning=(queuedDir[0]||queuedDir[1]) &&
-     (queuedDir[0]!==playerDirection[0]||queuedDir[1]!==playerDirection[1]);
-  if(turning && valid(cx,cy) && valid(cx+queuedDir[0],cy+queuedDir[1]) &&
-     Math.abs(px-cx)<=TURN_ASSIST_TILES && Math.abs(py-cy)<=TURN_ASSIST_TILES &&
-     (Math.abs(px-cx)>EPS||Math.abs(py-cy)>EPS)){
-    const beforeSnapX=px,beforeSnapY=py;
-    px=cx;py=cy;
-    player.x=cx;player.y=cy;
-    collectAlongPath(beforeSnapX,beforeSnapY,px,py);
-    if(over)break;
-    playerDirection=[...queuedDir];
-  }
+ let remaining=Math.min(dt,.05)*PLAYER_TILES_PER_SECOND;
+ const EPS=.000001;
+ // Movement proceeds exactly from one tile centre to the next.
+ // Requested turns stay buffered until the next legal junction.
+ for(let steps=0;remaining>EPS&&steps<14;steps++){
+  const cx=Math.round(px),cy=Math.round(py);
   const atCentre=Math.abs(px-cx)<EPS&&Math.abs(py-cy)<EPS;
+  const wantsTurn=queuedDir[0]!==0||queuedDir[1]!==0;
   if(atCentre){
-   px=cx;py=cy;
-   if((queuedDir[0]||queuedDir[1])&&valid(cx+queuedDir[0],cy+queuedDir[1]))playerDirection=[...queuedDir];
-   if(!valid(cx+playerDirection[0],cy+playerDirection[1])){playerDirection=[0,0];break}
+   px=cx;py=cy;player.x=cx;player.y=cy;
+   if(wantsTurn&&valid(cx+queuedDir[0],cy+queuedDir[1])){
+    playerDirection=[...queuedDir];
+   }
+   if(!playerDirection[0]&&!playerDirection[1])break;
+   if(!valid(cx+playerDirection[0],cy+playerDirection[1])){
+    playerDirection=[0,0];break;
+   }
+  }else if(wantsTurn &&
+    queuedDir[0]===-playerDirection[0] &&
+    queuedDir[1]===-playerDirection[1]){
+   // Reverse immediately along an existing corridor, without teleporting.
+   playerDirection=[...queuedDir];
   }
-  if(!playerDirection[0]&&!playerDirection[1])break;
-  // Distance to the next tile centre in the current direction.
-  const axis=playerDirection[0]?'x':'y';
-  const current=axis==='x'?px:py;
-  const sign=axis==='x'?playerDirection[0]:playerDirection[1];
-  const next=atCentre?Math.round(current)+sign:sign>0?Math.ceil(current-EPS):Math.floor(current+EPS);
-  const distance=Math.abs(next-current);
+  const dx=playerDirection[0],dy=playerDirection[1];
+  if(!dx&&!dy)break;
+  const axis=dx?'x':'y',pos=dx?px:py,sign=dx||dy;
+  // Pick the next tile centre in the actual travel direction.
+  const next=atCentre?Math.round(pos)+sign:
+    sign>0?Math.floor(pos+EPS)+1:Math.ceil(pos-EPS)-1;
+  const distance=Math.abs(next-pos);
+  if(distance<EPS){px=Math.round(px);py=Math.round(py);continue}
   const travel=Math.min(remaining,distance);
-  const beforeMoveX=px,beforeMoveY=py;
-  px+=playerDirection[0]*travel;py+=playerDirection[1]*travel;
-  collectAlongPath(beforeMoveX,beforeMoveY,px,py);
+  const oldX=px,oldY=py;
+  px+=dx*travel;py+=dy*travel;
+  collectAlongPath(oldX,oldY,px,py);
   if(over)break;
   remaining-=travel;
   if(travel>=distance-EPS){
@@ -665,7 +658,11 @@ function joyMove(e){
  const dx=e.clientX-(joyOrigin?.x??cx),dy=e.clientY-(joyOrigin?.y??cy),dist=Math.hypot(dx,dy),max=33,scale=dist>max?max/dist:1;
  stick.style.transform=`translate(calc(-50% + ${dx*scale}px),calc(-50% + ${dy*scale}px))`;
  if(dist<3){return} // Tiny accidental thumb movement must not erase a buffered turn.
- const next=Math.abs(dx)>=Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];
+ // Hysteresis prevents accidental diagonal thumb wobble from switching axes.
+ let horizontal=Math.abs(dx)>=Math.abs(dy);
+ if(queuedDir[0]!==0&&Math.abs(dx)*1.20>=Math.abs(dy))horizontal=true;
+ if(queuedDir[1]!==0&&Math.abs(dy)*1.20>=Math.abs(dx))horizontal=false;
+ const next=horizontal?[Math.sign(dx)||1,0]:[0,Math.sign(dy)||1];
  queuedDir=[...next];
  dir=[...next];
 }
