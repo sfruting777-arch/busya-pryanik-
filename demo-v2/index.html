@@ -375,7 +375,53 @@ function refreshStatus(){
  if(phase==='danger'&&Date.now()-lastLaugh>3200){laugh();lastLaugh=Date.now()}
  hud.textContent=`${hero==='pryanik'?'🐶 Пряник':'🐕 Буся'} | Собрано: ${score} | Осталось: ${food.size} | ❤️ ${lives}`;
 }
-function dog(x,y,isBusya){const px=x*40+20,py=y*40+20;ctx.save();ctx.translate(px,py);ctx.fillStyle=isBusya?'#e3a56a':'#bb6c32';ctx.beginPath();ctx.ellipse(0,2,15,13,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=isBusya?'#eab477':'#ce8749';if(isBusya){ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(-11,-24);ctx.lineTo(-1,-12);ctx.moveTo(12,-7);ctx.lineTo(11,-24);ctx.lineTo(1,-12);ctx.fill()}else{for(let a of [-12,12]){ctx.beginPath();ctx.arc(a,-8,9,0,7);ctx.fill()}}ctx.fillStyle='white';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,3,0,7);ctx.fill()}ctx.fillStyle='#21151c';for(let a of [-6,6]){ctx.beginPath();ctx.arc(a,-2,1.7,0,7);ctx.fill()}ctx.beginPath();ctx.arc(0,6,3,0,7);ctx.fill();ctx.fillStyle=isBusya?'#e5453e':'#dfd1b3';ctx.fillRect(-10,12,20,5);ctx.restore()}
+function dog(x,y,isBusya){
+ const X=x*40+20,Y=y*40+20,t=performance.now()/1000;
+ const isMoving=isBusya=== (hero==='busya') ? (playerDirection[0]!==0||playerDirection[1]!==0)&&!over&&!paused : !over&&!paused;
+ const bounce=isMoving?Math.sin(t*17+(isBusya?0:1))*1.3:Math.sin(t*2.6)*.45;
+ const blink=Math.sin(t*.93+(isBusya?1.5:0))>.995?.15:1;
+ ctx.save();ctx.translate(X,Y);
+ // Ground shadow and little animated feet
+ ctx.fillStyle='#27391c55';ctx.beginPath();ctx.ellipse(0,13,15,4,0,0,Math.PI*2);ctx.fill();
+ ctx.translate(0,bounce);
+ const coat=isBusya?'#efad69':'#c88143',light=isBusya?'#ffcf8f':'#eeb879',dark=isBusya?'#ae633b':'#8d4b2d';
+ const pawShift=isMoving?Math.sin(t*17)*2.2:0;
+ ctx.fillStyle=dark;
+ for(let side of [-1,1]){ctx.beginPath();ctx.ellipse(side*8,11+(side*pawShift),4.2,5.2,side*.13,0,Math.PI*2);ctx.fill()}
+ // Body, bright neck band and chest
+ ctx.fillStyle=coat;ctx.beginPath();ctx.ellipse(0,6,12.5,12,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=isBusya?'#e83c47':'#e9cf9b';ctx.beginPath();ctx.roundRect(-11,8,22,6,3);ctx.fill();
+ ctx.fillStyle=light;ctx.beginPath();ctx.ellipse(0,4,7,8,0,0,Math.PI*2);ctx.fill();
+ // Ears: pointed Chihuahua versus floppy curly Maltipoo
+ if(isBusya){
+  for(const side of [-1,1]){
+   ctx.save();ctx.translate(side*9,-8);ctx.rotate(side*(.10+Math.sin(t*3)*.055));
+   ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(-side*5,3);ctx.quadraticCurveTo(-side*7,-14,side*1,-19);ctx.quadraticCurveTo(side*12,-15,side*8,5);ctx.closePath();ctx.fill();
+   ctx.fillStyle='#f29c99';ctx.beginPath();ctx.moveTo(-side*2,0);ctx.quadraticCurveTo(-side*2,-12,side*1,-14);ctx.quadraticCurveTo(side*6,-10,side*5,1);ctx.closePath();ctx.fill();ctx.restore();
+  }
+ }else{
+  for(const side of [-1,1]){
+   ctx.fillStyle=dark;ctx.beginPath();ctx.ellipse(side*12,-5+Math.sin(t*3+side)*.5,6.6,10,side*.25,0,Math.PI*2);ctx.fill();
+   for(let i=0;i<4;i++){ctx.fillStyle=i%2?coat:light;ctx.beginPath();ctx.arc(side*(12+(i%2)*2),-12+i*4,3.8,0,Math.PI*2);ctx.fill()}
+  }
+ }
+ // Rounded head with shaded muzzle
+ const face=ctx.createRadialGradient(-5,-12,1,1,-3,20);
+ face.addColorStop(0,light);face.addColorStop(1,coat);
+ ctx.fillStyle=face;ctx.beginPath();ctx.ellipse(0,-5,13.5,12,0,0,Math.PI*2);ctx.fill();
+ if(!isBusya){for(let i=0;i<9;i++){const angle=Math.PI*1.04+i*Math.PI*.12;ctx.fillStyle=i%2?light:coat;ctx.beginPath();ctx.arc(Math.cos(angle)*11, -5+Math.sin(angle)*10,3.8,0,Math.PI*2);ctx.fill()}}
+ // Bright brows and eyes, with occasional blink
+ for(const side of [-1,1]){
+  ctx.fillStyle=isBusya?'#8d5538':'#91542d';ctx.beginPath();ctx.ellipse(side*5.7,-9.8,3.2,1.15,-side*.15,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff9ed';ctx.beginPath();ctx.ellipse(side*5.5,-5.5,3.5,3.6*blink,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#29221e';ctx.beginPath();ctx.ellipse(side*5.5,-5.3,2.35,2.6*blink,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(side*5.5-0.8,-6.3,blink>.5?0.8:.1,0,Math.PI*2);ctx.fill();
+ }
+ ctx.fillStyle=isBusya?'#ffe0b2':'#f8d8ab';ctx.beginPath();ctx.ellipse(0,1,7,5.7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#2b2020';ctx.beginPath();ctx.ellipse(0,-.5,3.3,2.5,0,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#7b453b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,4);ctx.quadraticCurveTo(-2.5,6,-4,3.8);ctx.moveTo(0,4);ctx.quadraticCurveTo(2.5,6,4,3.8);ctx.stroke();
+ ctx.restore();
+}
 function gardenTile(x,y){
  const X=x*40,Y=y*40,wall=map[y][x]==='#',seed=(x*127+y*263+x*y*17)%97;
  if(wall){
