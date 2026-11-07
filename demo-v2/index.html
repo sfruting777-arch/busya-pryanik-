@@ -628,23 +628,53 @@ let gardenBitmap=null;
 // Small illustrated shopfronts on the north boundary: collision stays solid hedge.
 // The continuous walkable lane directly below forms a Pac-Man-style market street.
 function drawMarketShop(ctx,x,width,label,kind){
- const y=2,w=width*40-6,left=x*40+3;
+ // Detailed shopfronts are painted into the static garden bitmap, so mobile FPS stays high.
+ const w=width*40-6,left=x*40+3,y=2,meat=kind==='meat';
  ctx.save();ctx.translate(left,y);
- ctx.shadowColor='#1e3826aa';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
- ctx.fillStyle='#eac997';ctx.beginPath();ctx.roundRect(0,0,w,36,4);ctx.fill();
+ // Deep wall shadow, wooden framing, raised facade.
+ ctx.shadowColor='#182e23aa';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+ const wood=ctx.createLinearGradient(0,0,0,38);
+ wood.addColorStop(0,'#ffe4b3');wood.addColorStop(.55,'#e5b87b');wood.addColorStop(1,'#a76a42');
+ ctx.fillStyle=wood;ctx.beginPath();ctx.roundRect(0,0,w,36,5);ctx.fill();
  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
- ctx.strokeStyle='#855b3c';ctx.lineWidth=2;ctx.stroke();
- ctx.fillStyle='#70432f';ctx.fillRect(5,9,w-10,25);
- ctx.fillStyle='#f7e2b6';ctx.fillRect(8,13,w-16,19);
- // The striped canopy and clear sign make each stall readable at phone scale.
- for(let i=0;i<Math.ceil((w-8)/14);i++){
-  ctx.fillStyle=i%2===0?(kind==='meat'?'#a84143':'#397b6b'):'#fff1d9';
-  ctx.fillRect(4+i*14,8,Math.min(14,w-8-i*14),8);
+ ctx.strokeStyle='#6d422a';ctx.lineWidth=2;ctx.stroke();
+ // Dark storefront and two glazed windows.
+ ctx.fillStyle='#754a33';ctx.fillRect(7,13,w-14,20);
+ ctx.fillStyle=meat?'#493d36':'#35584c';ctx.fillRect(11,16,w-22,14);
+ ctx.fillStyle='#d6f3e0';ctx.globalAlpha=.23;
+ ctx.beginPath();ctx.moveTo(13,16);ctx.lineTo(31,16);ctx.lineTo(18,30);ctx.lineTo(13,30);ctx.fill();
+ ctx.globalAlpha=1;
+ ctx.fillStyle='#d6a66d';ctx.fillRect(w/2-2,15,4,16);
+ // Striped fabric canopy with a soft lower shadow.
+ ctx.fillStyle='#422b2780';ctx.fillRect(4,14,w-8,4);
+ const stripe=meat?'#a83d45':'#277d70';
+ for(let i=0;i<Math.ceil((w-8)/13);i++){
+  ctx.fillStyle=i%2? '#fff0d5':stripe;
+  ctx.fillRect(4+i*13,10,Math.min(13,w-8-i*13),8);
+  ctx.beginPath();ctx.arc(Math.min(w-4,4+i*13+6.5),18,Math.min(6.5,(w-8-i*13)/2),0,Math.PI);ctx.fill();
  }
- ctx.fillStyle='#54352b';ctx.beginPath();ctx.roundRect(w*.16,0,w*.68,10,2);ctx.fill();
- ctx.fillStyle='#fff2d7';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.font='bold 7px system-ui';ctx.fillText(label,w/2,5,w*.62);
- ctx.font='13px system-ui';ctx.fillText(kind==='meat'?'🍖  🦴  🍖':'🦴  🐾  🦴',w/2,25,w-18);
+ // Carved hanging sign.
+ ctx.shadowColor='#2b170e77';ctx.shadowBlur=2;ctx.shadowOffsetY=1;
+ ctx.fillStyle='#563626';ctx.beginPath();ctx.roundRect(w*.16,0,w*.68,11,3);ctx.fill();
+ ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.strokeStyle='#b88d56';ctx.lineWidth=.8;ctx.stroke();
+ ctx.fillStyle='#fff2d8';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 8px system-ui';ctx.fillText(label,w/2,5.6,w*.63);
+ // Merchandise with highlights, not font-dependent emoji.
+ for(let i=0;i<3;i++){
+  const cx=w*(.26+i*.24),cy=25;
+  if(meat){
+   ctx.fillStyle='#e7d7b2';ctx.beginPath();ctx.roundRect(cx-9,cy-2,18,5,3);ctx.fill();
+   ctx.fillStyle=i===1?'#e7bd85':'#c96b55';ctx.beginPath();ctx.ellipse(cx,cy,7,5,-.2,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#ffe3bc';ctx.beginPath();ctx.ellipse(cx-2,cy-2,2.6,1.3,0,0,7);ctx.fill();
+  }else{
+   ctx.fillStyle='#f4dbac';ctx.beginPath();ctx.roundRect(cx-8,cy-2,16,6,3);ctx.fill();
+   for(const side of [-1,1]){ctx.beginPath();ctx.arc(cx+side*8,cy-2,3,0,7);ctx.arc(cx+side*8,cy+4,3,0,7);ctx.fill()}
+   ctx.fillStyle='#9a613a';ctx.beginPath();ctx.arc(cx,cy+1,1.5,0,7);ctx.fill();
+  }
+ }
+ ctx.fillStyle='#a36b3d';ctx.fillRect(3,33,w-6,3);
+ ctx.fillStyle='#fff0c5';ctx.globalAlpha=.7;ctx.fillRect(8,34,w-16,1);
  ctx.restore();
 }
 function cachedGarden(){
