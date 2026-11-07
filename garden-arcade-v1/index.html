@@ -236,7 +236,11 @@ function enterGame(){stopIntroMusic();document.getElementById("intro").style.dis
 const baseMap=["###############","#.............#","#.###.#.#####.#","#.#...#.....#.#","#.#.#####.#.#.#","#...#.....#...#","###.#.###.###.#","#...#...#.....#","#.#####.#.###.#","#.....#.#.#...#","#.###.#.#.#.###","#...#...#.#...#","#.#.#####.###.#","#.............#","###############"];
 // Four connected garden districts, separated by two wide main promenades.
 const WORLD=29,TILE=40,WORLD_PX=WORLD*TILE;
+// Two carefully placed walk-around obstacles in the central promenade.
+const plazaProps=[{x:12,y:14,type:'flowers'},{x:16,y:14,type:'bench'}];
+const blockedProps=new Set(plazaProps.map(p=>p.x+','+p.y));
 const map=Array.from({length:WORLD},(_,y)=>Array.from({length:WORLD},(_,x)=>{
+ if(blockedProps.has(x+','+y))return '#';
  if(x===0||y===0||x===WORLD-1||y===WORLD-1)return '#';
  if(x===14||y===14)return '.';
  const bx=x<14?x:x-14,by=y<14?y:y-14;
@@ -685,11 +689,38 @@ function drawMarketShop(ctx,x,width,label,kind){
  ctx.fillStyle='#fff0c5';ctx.globalAlpha=.7;ctx.fillRect(8,34,w-16,1);
  ctx.restore();
 }
+function drawPlazaProp(ctx,p){
+ const X=p.x*40,Y=p.y*40;
+ ctx.save();ctx.translate(X,Y);
+ // Hide hedge art under the prop, retaining an impassable tile for both dogs.
+ ctx.fillStyle='#f3e1b5';ctx.fillRect(0,0,40,40);
+ ctx.shadowColor='#50391e77';ctx.shadowBlur=5;ctx.shadowOffsetY=4;
+ if(p.type==='flowers'){
+  ctx.fillStyle='#ad744e';ctx.beginPath();ctx.ellipse(20,24,19,13,0,0,7);ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowOffsetY=0;
+  ctx.fillStyle='#f5d7a5';ctx.beginPath();ctx.ellipse(20,19,18,12,0,0,7);ctx.fill();
+  ctx.fillStyle='#527f3b';ctx.beginPath();ctx.ellipse(20,18,15,9,0,0,7);ctx.fill();
+  for(let i=0;i<8;i++){
+   const a=i*Math.PI/4,xx=20+Math.cos(a)*11,yy=18+Math.sin(a)*6;
+   ctx.fillStyle=i%2?'#ffe6f2':'#ef82a6';
+   for(let j=0;j<5;j++){const t=j*Math.PI*2/5;ctx.beginPath();ctx.arc(xx+Math.cos(t)*2.7,yy+Math.sin(t)*2.7,2.2,0,7);ctx.fill()}
+   ctx.fillStyle='#ffda64';ctx.beginPath();ctx.arc(xx,yy,2,0,7);ctx.fill();
+  }
+ }else{
+  ctx.fillStyle='#6b4735';ctx.fillRect(6,13,5,23);ctx.fillRect(29,13,5,23);
+  ctx.shadowColor='transparent';ctx.shadowOffsetY=0;
+  ctx.fillStyle='#dca56a';ctx.beginPath();ctx.roundRect(4,8,32,9,3);ctx.fill();
+  ctx.fillStyle='#8d5135';ctx.beginPath();ctx.roundRect(4,21,32,9,3);ctx.fill();
+  ctx.strokeStyle='#f5cb91';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,12);ctx.lineTo(32,12);ctx.moveTo(8,25);ctx.lineTo(32,25);ctx.stroke();
+ }
+ ctx.restore();
+}
 function cachedGarden(){
  if(gardenBitmap)return gardenBitmap;
  const layer=document.createElement('canvas');layer.width=WORLD_PX;layer.height=WORLD_PX;
  const layerContext=layer.getContext('2d');
  for(let yy=0;yy<WORLD;yy++)for(let xx=0;xx<WORLD;xx++)gardenTile(xx,yy,layerContext);
+ for(const p of plazaProps)drawPlazaProp(layerContext,p);
  drawMarketShop(layerContext,2,5,'МЯСНАЯ ЛАВКА','meat');
  drawMarketShop(layerContext,10,5,'ЛАКОМСТВА','treats');
  drawMarketShop(layerContext,19,6,'МАГАЗИН MON​​GE','treats');
