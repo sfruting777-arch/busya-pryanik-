@@ -20,7 +20,7 @@ let modelLoaded=false;
 const status=document.getElementById('state');
 status.innerHTML='🐶 PRYANIK 15.0<br>Загружаю цветную модель…';
 const loading=new GLTFLoader();
-loading.load('./pryanik.glb',gltf=>{
+loading.load('./Meshy_AI_Pryanik_in_a_Sweater_1108002031_texture.glb',gltf=>{
  const model=gltf.scene;
  model.rotation.x=-Math.PI/2;
  model.rotation.y=Math.PI;
@@ -41,7 +41,7 @@ loading.load('./pryanik.glb',gltf=>{
  modelFrame.add(model);modelLoaded=true;
  status.innerHTML='🐶 PRYANIK 15.0<br>Цветная модель • движение • GLB';
 },undefined,e=>{
- status.innerHTML='🐶 PRYANIK 15.0<br>Файл pryanik.glb ещё не загружен';
+ status.innerHTML='🐶 PRYANIK 15.0<br>Файл Meshy_AI_Pryanik_in_a_Sweater_1108002031_texture.glb ещё не загружен';
  console.warn('Model not found',e);
 });
 const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
