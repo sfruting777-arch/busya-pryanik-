@@ -1,0 +1,116 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Пряник 16.1 — цветная 3D-модель Meshy</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Пряник 16.1 • мордочкой вперёд • цветной GLB</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 PRYANIK 16.1<br>Meshy GLB • текстуры<br>Мягкое движение • без скелета</div><div id="error"></div><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script><script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
+try{
+const scene=new THREE.Scene();scene.background=new THREE.Color('#b9d9ca');scene.fog=new THREE.Fog('#b9d9ca',18,35);
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.getElementById('scene').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xfff7e9,0x668c78,2));const sun=new THREE.DirectionalLight(0xffefcc,3);sun.position.set(-5,10,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-13;sun.shadow.camera.right=13;sun.shadow.camera.top=13;sun.shadow.camera.bottom=-13;scene.add(sun);
+const mat=(c,r=1)=>new THREE.MeshStandardMaterial({color:c,roughness:r});const grass=mat('#74a86a'),path=mat('#ebd4a4'),fur=mat('#b66a36'),furLight=mat('#d78c4c'),furDark=mat('#8b4d2b'),cream=mat('#eee1c4'),nose=mat('#2a201b'),eye=mat('#17100f',.3),pink=mat('#d38e84'),hedge=mat('#3e854a');
+function mesh(parent,geo,m,x=0,y=0,z=0){const a=new THREE.Mesh(geo,m);a.position.set(x,y,z);a.castShadow=true;a.receiveShadow=true;parent.add(a);return a}
+function ball(p,m,x,y,z,sx,sy,sz){const o=mesh(p,new THREE.SphereGeometry(1,14,12),m,x,y,z);o.scale.set(sx,sy,sz);return o}
+const ground=mesh(scene,new THREE.PlaneGeometry(200,200),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+mesh(scene,new THREE.BoxGeometry(12,.035,12),path,0,.018,0).receiveShadow=true;
+const stones=mat('#e5c58e');for(let i=0;i<85;i++){let x=Math.sin(i*19.7)*5.5,z=Math.cos(i*11.3)*5.5;ball(scene,stones,x,.035,z,.04,.015,.025)}
+const shrub=(x,z,r=1)=>{ball(scene,hedge,x,.48*r,z,.55*r,.5*r,.5*r);ball(scene,mat('#58a35a'),x-.27*r,.67*r,z+.13*r,.3*r,.32*r,.28*r)};
+for(let i=0;i<13;i++){let a=i*Math.PI*2/13;shrub(Math.cos(a)*7.4,Math.sin(a)*7.4,.85)}
+const dog=new THREE.Group();scene.add(dog);
+const body=new THREE.Group();dog.add(body);
+const modelFrame=new THREE.Group();body.add(modelFrame);
+let modelLoaded=false;
+const status=document.getElementById('state');
+status.innerHTML='🐶 PRYANIK 16.1<br>Загружаю цветную модель…';
+
+// Head-only adjustment: independent geometry copy; original GLB stays unchanged.
+// A feathered spatial mask keeps the neck, body, sweater and legs intact.
+function reduceHead(root) {
+ root.traverse(o=>{
+  if (!o.isMesh || !o.geometry?.attributes?.position) return;
+  o.geometry=o.geometry.clone();
+  const pos=o.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++){
+   const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
+   const neckBlend=THREE.MathUtils.smoothstep(z,-0.10,0.25);
+   const upperBlend=THREE.MathUtils.smoothstep(y,0.02,0.25);
+   const w=neckBlend*upperBlend;
+   if(w<=0)continue;
+   const k=1-0.20*w;
+   // Shrink all three axes around centre of the head, not the dog origin.
+   pos.setXYZ(i, x*k, 0.40+(y-0.40)*k, 0.35+(z-0.35)*k);
+  }
+  pos.needsUpdate=true;
+  o.geometry.computeVertexNormals();
+  o.geometry.computeBoundingBox();
+  o.geometry.computeBoundingSphere();
+ });
+}
+
+const loading=new GLTFLoader();
+loading.load('./Meshy_AI_Pryanik_the_Cozy_Pood_1108015302_texture.glb',gltf=>{
+ const model=gltf.scene;
+ reduceHead(model);
+ model.rotation.x=0; // Meshy GLB uses Y-up; previous -90 deg tipped dog onto its back
+ model.rotation.y=0; // align Meshy local forward with game movement; no 180-degree reversal
+ model.updateMatrixWorld(true);
+ const bounds=new THREE.Box3().setFromObject(model);
+ const size=new THREE.Vector3();bounds.getSize(size);
+ const scale=1.65/Math.max(size.x,size.y,size.z);
+ model.scale.setScalar(scale); model.updateMatrixWorld(true);
+ const fitted=new THREE.Box3().setFromObject(model);
+ const center=new THREE.Vector3();fitted.getCenter(center);
+ model.position.x-=center.x;model.position.z-=center.z;
+ model.position.y-=fitted.min.y;
+ model.traverse(o=>{
+  if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
+   if(o.material){o.material.side=THREE.FrontSide;}
+  }
+ });
+ modelFrame.add(model);modelLoaded=true;
+ status.innerHTML='🐶 PRYANIK 16.1<br>Цветная модель • движение • GLB';
+},undefined,e=>{
+ status.innerHTML='🐶 PRYANIK 16.1<br>Файл Meshy_AI_Pryanik_the_Cozy_Pood_1108015302_texture.glb ещё не загружен';
+ console.warn('Model not found',e);
+});
+const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
+let vx=0,vz=0,angle=0,phase=0;const joy=document.getElementById('joy'),thumb=document.getElementById('thumb');let active=null;const input={x:0,y:0};
+function move(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy),range=43,clamp=Math.min(1,dist/range);input.x=dist>7?dx/dist*clamp:0;input.y=dist>7?dy/dist*clamp:0;thumb.style.transform='translate('+input.x*range+'px,'+input.y*range+'px)'}
+function resetJoy(){active=null;input.x=0;input.y=0;thumb.style.transform='translate(0,0)'}
+/* iOS Safari: handle touch natively and suppress its text loupe, long-press and zoom. */
+let touchId=null;
+joy.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();if(touchId!==null)return;const t=e.changedTouches[0];touchId=t.identifier;move(t)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){move(t);break}}},{passive:false});
+function endTouch(e){e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){touchId=null;resetJoy();break}}}
+joy.addEventListener('touchend',endTouch,{passive:false});joy.addEventListener('touchcancel',endTouch,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();active=e.pointerId;joy.setPointerCapture(active);move(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;if(e.pointerId===active){e.preventDefault();move(e)}});
+function release(e){if(e.pointerType==='touch')return;e.preventDefault();if(e.pointerId!==active)return;resetJoy()}
+joy.addEventListener('pointerup',release);joy.addEventListener('pointercancel',release);
+document.addEventListener('touchstart',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchend',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
+document.addEventListener('selectstart',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>e.preventDefault());
+const keys=new Set();addEventListener('keydown',e=>keys.add(e.key.toLowerCase()));addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+const clock=new THREE.Clock();let elapsed=0;
+function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+let ix=input.x,iz=input.y;if(keys.size){ix=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));iz=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'))}
+const length=Math.hypot(ix,iz);if(length>1){ix/=length;iz/=length}
+const response=1-Math.exp(-dt*12);vx+=(ix*3.2-vx)*response;vz+=(iz*3.2-vz)*response;
+dog.position.x=THREE.MathUtils.clamp(dog.position.x+vx*dt,-5.55,5.55);dog.position.z=THREE.MathUtils.clamp(dog.position.z+vz*dt,-5.55,5.55);
+const speed=Math.hypot(vx,vz);if(speed>.12){const target=Math.atan2(vx,vz);angle+=Math.atan2(Math.sin(target-angle),Math.cos(target-angle))*(1-Math.exp(-dt*13))}
+dog.rotation.y=angle;
+// GLB has no skeleton/rig: lightweight bounce and tilt only, no fake leg bending.
+phase+=dt*(5+speed*4);
+const amp=Math.min(1,speed/2.3);
+body.position.y=Math.abs(Math.sin(phase*1.05))*.035*amp;
+body.rotation.z=Math.sin(phase*.5)*.017*amp;
+body.rotation.x=Math.sin(phase)*.012*amp;
+shadow.position.set(dog.position.x,.047,dog.position.z);
+const desired=new THREE.Vector3(dog.position.x,8.4,dog.position.z+11.5);camera.position.lerp(desired,1-Math.exp(-dt*3.7));camera.lookAt(dog.position.x,0.7,dog.position.z);
+renderer.render(scene,camera)}
+camera.position.set(0,8.4,11.5);frame();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+}catch(e){const el=document.getElementById('error');el.style.display='block';el.textContent='Не удалось загрузить 3D: '+e.message;console.error(e)}
+</script></body></html>
