@@ -1,0 +1,121 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Пряник — прогулка в нашем мире</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Наш маленький мир • прогулка V1</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 Пряник<br>Свитер V5 • живая ходьба</div><div id="error"></div><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script><script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
+try{
+const scene=new THREE.Scene();scene.background=new THREE.Color('#b9d9ca');scene.fog=new THREE.Fog('#b9d9ca',18,35);
+const camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,100);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.getElementById('scene').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xfff7e9,0x668c78,2));const sun=new THREE.DirectionalLight(0xffefcc,3);sun.position.set(-5,10,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-13;sun.shadow.camera.right=13;sun.shadow.camera.top=13;sun.shadow.camera.bottom=-13;scene.add(sun);
+const mat=(c,r=1)=>new THREE.MeshStandardMaterial({color:c,roughness:r});const grass=mat('#74a86a'),path=mat('#ebd4a4'),fur=mat('#b66a36'),furLight=mat('#d78c4c'),furDark=mat('#8b4d2b'),cream=mat('#eee1c4'),nose=mat('#2a201b'),eye=mat('#17100f',.3),pink=mat('#d38e84'),hedge=mat('#3e854a');
+function mesh(parent,geo,m,x=0,y=0,z=0){const a=new THREE.Mesh(geo,m);a.position.set(x,y,z);a.castShadow=true;a.receiveShadow=true;parent.add(a);return a}
+function ball(p,m,x,y,z,sx,sy,sz){const o=mesh(p,new THREE.SphereGeometry(1,14,12),m,x,y,z);o.scale.set(sx,sy,sz);return o}
+const ground=mesh(scene,new THREE.PlaneGeometry(200,200),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+mesh(scene,new THREE.BoxGeometry(12,.035,12),path,0,.018,0).receiveShadow=true;
+const stones=mat('#e5c58e');for(let i=0;i<85;i++){let x=Math.sin(i*19.7)*5.5,z=Math.cos(i*11.3)*5.5;ball(scene,stones,x,.035,z,.04,.015,.025)}
+const shrub=(x,z,r=1)=>{ball(scene,hedge,x,.48*r,z,.55*r,.5*r,.5*r);ball(scene,mat('#58a35a'),x-.27*r,.67*r,z+.13*r,.3*r,.32*r,.28*r)};
+for(let i=0;i<13;i++){let a=i*Math.PI*2/13;shrub(Math.cos(a)*7.4,Math.sin(a)*7.4,.85)}
+const dog=new THREE.Group();scene.add(dog);
+const body=new THREE.Group();dog.add(body);
+const modelFrame=new THREE.Group();body.add(modelFrame);
+let modelLoaded=false;
+const status=document.getElementById('state');
+status.innerHTML='🐶 Пряник<br>Загружаю модель и походку…';
+const loading=new GLTFLoader();
+let mixer=null,walkAction=null,wasWalking=false;
+loading.load('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',gltf=>{
+ const model=gltf.scene;
+ // Cover only the defective sweater faces with clean knit UVs.
+// Separate faces avoid stretching UVs across the patch boundary.
+const repairs=[];
+model.traverse(o=>{
+ if(!o.isSkinnedMesh||o.name!=='char1')return;
+ const src=o.geometry,uv=src.attributes.uv,p=src.attributes.position,idx=src.index;
+ const faces=[];
+ const inside=k=>p.getX(k)<-.0015&&Math.pow((uv.getX(k)-.6145)/.017,2)+Math.pow((uv.getY(k)-.5895)/.015,2)<1;
+ for(let k=0;k<idx.count;k+=3){const a=idx.getX(k),b=idx.getX(k+1),c=idx.getX(k+2);if(inside(a)||inside(b)||inside(c))faces.push(a,b,c);}
+ const geo=src.clone();geo.setIndex(faces);
+ const clean=geo.attributes.uv;
+ for(let k=0;k<clean.count;k++)clean.setXY(k,clean.getX(k)+.020,clean.getY(k)+.018);
+ clean.needsUpdate=true;
+ const mat=o.material.clone();mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;mat.depthWrite=false;
+ const cover=new THREE.SkinnedMesh(geo,mat);cover.name='Sweater_clean_knit_patch';cover.renderOrder=1;
+ cover.position.copy(o.position);cover.quaternion.copy(o.quaternion);cover.scale.copy(o.scale);
+ cover.bindMode=o.bindMode;cover.bind(o.skeleton,o.bindMatrix);cover.frustumCulled=false;
+ repairs.push([o.parent,cover]);
+});
+repairs.forEach(([parent,cover])=>parent.add(cover));
+// Render lettering after the knit repair while retaining body occlusion.
+model.traverse(o=>{
+ if(!o.isMesh||!o.name.startsWith('PRYANIK_logo_'))return;
+ o.renderOrder=2;
+ o.material=o.material.clone();
+ o.material.polygonOffset=true;
+ o.material.polygonOffsetFactor=-4;
+ o.material.polygonOffsetUnits=-4;
+});
+
+ mixer=new THREE.AnimationMixer(model);
+ const walkClip=gltf.animations.find(c=>c.name==='Pryanik_gentle_walk_v1')||gltf.animations[1];
+ if(!walkClip)throw new Error('В модели нет анимации ходьбы');
+ walkAction=mixer.clipAction(walkClip);walkAction.play();mixer.update(0);
+ model.updateMatrixWorld(true);
+ const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+ model.scale.setScalar(1.65/Math.max(size.x,size.y,size.z));model.updateMatrixWorld(true);
+ const fitted=new THREE.Box3().setFromObject(model),center=fitted.getCenter(new THREE.Vector3());
+ model.position.set(-center.x,-fitted.min.y,-center.z);
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+ modelFrame.add(model);modelLoaded=true;
+ status.innerHTML='🐶 Пряник готов<br>Ходи золотой лапкой';
+},undefined,e=>{
+ status.innerHTML='Не удалось загрузить Пряника';
+ const el=document.getElementById('error');el.style.display='block';el.textContent='Ошибка загрузки модели. Обнови страницу. '+(e.message||'');
+ console.warn('Model load failed',e);
+});
+const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
+let vx=0,vz=0,angle=0,phase=0;const joy=document.getElementById('joy'),thumb=document.getElementById('thumb');let active=null;const input={x:0,y:0};
+function move(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy),range=43,clamp=Math.min(1,dist/range);input.x=dist>7?dx/dist*clamp:0;input.y=dist>7?dy/dist*clamp:0;thumb.style.transform='translate('+input.x*range+'px,'+input.y*range+'px)'}
+function resetJoy(){active=null;input.x=0;input.y=0;thumb.style.transform='translate(0,0)'}
+/* iOS Safari: handle touch natively and suppress its text loupe, long-press and zoom. */
+let touchId=null;
+joy.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();if(touchId!==null)return;const t=e.changedTouches[0];touchId=t.identifier;move(t)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){move(t);break}}},{passive:false});
+function endTouch(e){e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(t.identifier===touchId){touchId=null;resetJoy();break}}}
+joy.addEventListener('touchend',endTouch,{passive:false});joy.addEventListener('touchcancel',endTouch,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();active=e.pointerId;joy.setPointerCapture(active);move(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;if(e.pointerId===active){e.preventDefault();move(e)}});
+function release(e){if(e.pointerType==='touch')return;e.preventDefault();if(e.pointerId!==active)return;resetJoy()}
+joy.addEventListener('pointerup',release);joy.addEventListener('pointercancel',release);
+document.addEventListener('touchstart',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('touchend',e=>e.preventDefault(),{passive:false,capture:true});
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
+document.addEventListener('selectstart',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>e.preventDefault());
+const keys=new Set();addEventListener('keydown',e=>keys.add(e.key.toLowerCase()));addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+addEventListener('blur',()=>{touchId=null;resetJoy();keys.clear();vx=0;vz=0;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){touchId=null;resetJoy();keys.clear();vx=0;vz=0;}});
+joy.addEventListener('lostpointercapture',()=>resetJoy());
+const clock=new THREE.Clock();let elapsed=0;
+function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+let ix=modelLoaded?input.x:0,iz=modelLoaded?input.y:0;if(modelLoaded&&keys.size){ix=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));iz=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'))}
+const length=Math.hypot(ix,iz);if(length>1){ix/=length;iz/=length}
+const response=1-Math.exp(-dt*12);vx+=(ix*1.45-vx)*response;vz+=(iz*1.45-vz)*response;
+dog.position.x=THREE.MathUtils.clamp(dog.position.x+vx*dt,-5.55,5.55);dog.position.z=THREE.MathUtils.clamp(dog.position.z+vz*dt,-5.55,5.55);
+const speed=Math.hypot(vx,vz);if(speed>.12){const target=Math.atan2(vx,vz);angle+=Math.atan2(Math.sin(target-angle),Math.cos(target-angle))*(1-Math.exp(-dt*13))}
+dog.rotation.y=angle;
+// Keep the approved skeletal walk in step with actual ground movement.
+const walking=speed>.04&&modelLoaded;
+if(mixer&&walkAction){
+ if(walking){walkAction.timeScale=Math.min(1.35,speed/1.15);mixer.update(dt);}
+ else if(wasWalking){walkAction.reset().play();mixer.update(0);}
+}
+wasWalking=walking;
+body.position.y=0;body.rotation.set(0,0,0);
+shadow.position.set(dog.position.x,.047,dog.position.z);
+const desired=new THREE.Vector3(dog.position.x,4.8,dog.position.z+6.8);camera.position.lerp(desired,1-Math.exp(-dt*3.7));camera.lookAt(dog.position.x,0.7,dog.position.z);
+renderer.render(scene,camera)}
+camera.position.set(0,4.8,6.8);frame();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+}catch(e){const el=document.getElementById('error');el.style.display='block';el.textContent='Не удалось загрузить 3D: '+e.message;console.error(e)}
+</script></body></html>
