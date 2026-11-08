@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Пряник — прогулка в нашем мире</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Наш маленький мир • прогулка V1</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 Пряник<br>Свитер V5 • живая ходьба</div><div id="error"></div><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script><script type="module">
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Пряник — прогулка в нашем мире</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172a25;font-family:system-ui,-apple-system,sans-serif;color:white;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#scene{position:fixed;inset:0}#top{position:fixed;top:env(safe-area-inset-top,12px);left:0;right:0;text-align:center;pointer-events:none;text-shadow:0 2px 8px #25352b}h1{font-size:clamp(20px,5vw,30px);margin:14px 0 3px;color:#ffe0a3}#sub{font-size:13px;opacity:.94}#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:25px;width:146px;height:146px;border:3px solid #f7ce7c;border-radius:50%;background:radial-gradient(circle,#674d66bb,#312e4cbb);box-shadow:0 0 20px #f7c65d66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:grid;place-items:center}#thumb{width:70px;height:70px;border:2px solid #ffe2a0;border-radius:50%;display:grid;place-items:center;font-size:38px;color:#ffd06c;background:#48374c;transform:translate(0,0);pointer-events:none}#help{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 185px);left:15px;right:15px;text-align:center;font-size:13px;text-shadow:0 1px 4px #111}#state{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);font-size:12px;background:#172b26bb;border:1px solid #bfa66a;padding:9px;border-radius:12px;max-width:150px}#error{position:fixed;top:35%;left:10%;width:80%;color:white;background:#a33;padding:20px;border-radius:14px;display:none}</style></head><body><div id="scene"></div><div id="top"><h1>🐾 Пряник 3D</h1><div id="sub">Наш маленький мир • прогулка V1.1</div></div><div id="help">Веди золотую лапку в любую сторону • отпусти, чтобы остановиться</div><div id="joy"><div id="thumb">🐾</div></div><div id="state">🐶 Пряник<br>Свитер V5 • живая ходьба</div><div id="error"></div><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script><script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
 try{
@@ -21,8 +21,32 @@ const status=document.getElementById('state');
 status.innerHTML='🐶 Пряник<br>Загружаю модель и походку…';
 const loading=new GLTFLoader();
 let mixer=null,walkAction=null,wasWalking=false;
-loading.load('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',gltf=>{
- const model=gltf.scene;
+let loadAttempt=0;
+async function loadPryanik(){
+ const attempt=++loadAttempt;
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),45000);
+ const errorBox=document.getElementById('error');errorBox.style.display='none';
+ try{
+ status.innerHTML='🐶 Пряник<br>Скачиваю модель: 0%';
+ const response=await fetch('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',{signal:controller.signal});
+ if(!response.ok)throw new Error('HTTP '+response.status);
+ const total=Number(response.headers.get('content-length'))||9357828;
+ let data;
+ if(response.body&&response.body.getReader){
+  const reader=response.body.getReader(),chunks=[];let received=0;
+  while(true){const part=await reader.read();if(part.done)break;chunks.push(part.value);received+=part.value.length;status.innerHTML='🐶 Пряник<br>Скачиваю модель: '+Math.min(100,Math.round(received/total*100))+'%';}
+  data=new Uint8Array(received);let offset=0;for(const chunk of chunks){data.set(chunk,offset);offset+=chunk.length;}
+ }else data=new Uint8Array(await response.arrayBuffer());
+ clearTimeout(timeout);
+ if(attempt!==loadAttempt)return;
+ status.innerHTML='🐶 Пряник<br>Подготавливаю шерсть и свитер…';
+ const gltf=await Promise.race([
+  loading.parseAsync(data.buffer,new URL('../pryanik-walk-test-v1/',location.href).href),
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error('Не удалось подготовить текстуры')),30000))
+ ]);
+ if(attempt!==loadAttempt)return;
+  const model=gltf.scene;
  // Cover only the defective sweater faces with clean knit UVs.
 // Separate faces avoid stretching UVs across the patch boundary.
 const repairs=[];
@@ -65,11 +89,18 @@ model.traverse(o=>{
  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
  modelFrame.add(model);modelLoaded=true;
  status.innerHTML='🐶 Пряник готов<br>Ходи золотой лапкой';
-},undefined,e=>{
+
+ }catch(e){
+ clearTimeout(timeout);
+ if(attempt!==loadAttempt)return;
+ if(attempt===1){status.innerHTML='Повторяю загрузку Пряника…';setTimeout(loadPryanik,800);return;}
  status.innerHTML='Не удалось загрузить Пряника';
- const el=document.getElementById('error');el.style.display='block';el.textContent='Ошибка загрузки модели. Обнови страницу. '+(e.message||'');
- console.warn('Model load failed',e);
-});
+ errorBox.style.display='block';errorBox.textContent='Загрузка прервалась: '+(e.name==='AbortError'?'слишком долго нет ответа':e.message)+'. ';
+ const retry=document.createElement('button');retry.textContent='Загрузить ещё раз';retry.style.cssText='padding:12px;border-radius:10px;border:0;margin-top:12px';retry.onclick=loadPryanik;errorBox.appendChild(retry);
+ console.error('Pryanik load failed',e);
+ }
+}
+loadPryanik();
 const shadow=mesh(scene,new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x4b6248,transparent:true,opacity:.2,depthWrite:false}),0,.047,0);shadow.rotation.x=-Math.PI/2;
 let vx=0,vz=0,angle=0,phase=0;const joy=document.getElementById('joy'),thumb=document.getElementById('thumb');let active=null;const input={x:0,y:0};
 function move(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy),range=43,clamp=Math.min(1,dist/range);input.x=dist>7?dx/dist*clamp:0;input.y=dist>7?dy/dist*clamp:0;thumb.style.transform='translate('+input.x*range+'px,'+input.y*range+'px)'}
