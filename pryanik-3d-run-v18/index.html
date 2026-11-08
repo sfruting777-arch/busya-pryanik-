@@ -45,7 +45,7 @@ function reduceHead(root) {
 }
 
 const loading=new GLTFLoader();
-loading.load('./Meshy_AI_Pryanik_the_Cozy_Pood_1108015302_texture.glb',gltf=>{
+loading.load('../pryanik-3d-run-v17/Meshy_AI_Pryanik_the_Cozy_Pood_1108015302_texture.glb',gltf=>{
  const model=gltf.scene;
  reduceHead(model);
  model.rotation.x=0; // Meshy GLB uses Y-up; previous -90 deg tipped dog onto its back
