@@ -49,7 +49,7 @@ function update(){requestAnimationFrame(update);const dt=Math.min(clock.getDelta
  const magnitude=Math.min(1,Math.hypot(x,y));const isMoving=magnitude>.1;
  if(isMoving){const dx=x/magnitude,dz=y/magnitude; // Up on touch screen moves towards negative world Z.
  const step=dt*1.35*magnitude;let nextX=THREE.MathUtils.clamp(actor.position.x+dx*step,-10,10),nextZ=THREE.MathUtils.clamp(actor.position.z+dz*step,-10,10);
- actor.position.set(nextX,0,nextZ);const heading=Math.atan2(dx,dz);const delta=Math.atan2(Math.sin(heading-actor.rotation.y),Math.cos(heading-actor.rotation.y));actor.rotation.y+=delta*(1-Math.exp(-dt*9));
+ actor.position.set(nextX,0,nextZ);const heading=Math.atan2(-dx,-dz);const delta=Math.atan2(Math.sin(heading-actor.rotation.y),Math.cos(heading-actor.rotation.y));actor.rotation.y+=delta*(1-Math.exp(-dt*9));
  }
  if(isMoving!==walking){if(isMoving&&walkAction){walkAction.reset().fadeIn(.18).play();if(idleAction&&idleAction!==walkAction)idleAction.fadeOut(.18)}else if(idleAction){idleAction.reset().fadeIn(.18).play();if(walkAction&&walkAction!==idleAction)walkAction.fadeOut(.18)}walking=isMoving}
  if(mixer){mixer.timeScale=isMoving?Math.max(.5,magnitude):1;mixer.update(dt)}
