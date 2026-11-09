@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><title>Буся — управление v4</title><style>
+*{box-sizing:border-box}html,body{height:100%;width:100%;margin:0;overflow:hidden;overscroll-behavior:none;touch-action:none;font-family:-apple-system,system-ui,sans-serif;background:#91cbd0;color:#fff;-webkit-user-select:none;user-select:none}canvas{display:block;position:fixed;inset:0;touch-action:none}#head{position:fixed;z-index:2;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;text-align:center;text-shadow:0 2px 5px #273b32}h2{font-size:20px;margin:0 0 6px;color:#fff0bc}#status{font-size:13px;font-weight:600}#pos{margin-top:4px;font-size:12px}#joy{position:fixed;z-index:5;bottom:calc(26px + env(safe-area-inset-bottom));left:18px;width:140px;height:140px;border:3px solid #ffdfa3;border-radius:50%;background:#415b4d99;touch-action:none;display:grid;place-items:center}#stick{width:65px;height:65px;border-radius:50%;border:3px solid #fff1bd;background:#ac874fdc;display:grid;place-items:center;font-size:31px;transform:translate(0px,0px);pointer-events:none}#buttons{z-index:5;position:fixed;right:15px;bottom:calc(25px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:49vw}button{border:2px solid #f3d69c;background:#654e3edc;border-radius:15px;color:white;font-size:13px;font-weight:700;padding:11px 13px}#info{font-size:11px;text-align:right;line-height:1.35;text-shadow:0 1px 5px #27352e}#msg{position:fixed;z-index:6;left:10px;right:10px;top:85px;text-align:center;padding:12px;border-radius:14px;background:#3c4034e3;font-size:13px;display:none}
+</style></head><body>
+<div id="head"><h2>🐶 Буся — тест управления v4</h2><div id="status">Загружаю Бусю…</div><div id="pos">X: 0.0 · Z: 4.0</div></div><div id="msg"></div>
+<div id="joy"><div id="stick">🐾</div></div><div id="buttons"><button id="auto">▶ Проверить ходьбу</button><button id="reset">↺ Вернуть Бусю</button><button id="pause">⏸ Пауза</button><label style="font-size:12px;text-align:right;text-shadow:0 1px 5px #27352e">Частота шагов <output id="cadVal">1.9×</output><br><input id="cad" type="range" min="1" max="2.8" step=".1" value="1.9" style="width:115px;accent-color:#efd28a"></label><div id="info">Скорость +20%. Частоту шагов можно настроить.<br>На границе поля Буся остановится.</div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';
+const el=id=>document.getElementById(id);const scene=new THREE.Scene();scene.background=new THREE.Color('#a0d3dc');scene.fog=new THREE.Fog('#a0d3dc',24,53);
+const renderer=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);
+const cam=new THREE.PerspectiveCamera(57,innerWidth/innerHeight,.05,70);scene.add(new THREE.HemisphereLight(0xf8ffff,0x81955d,2.2));const light=new THREE.DirectionalLight(0xfff5db,2.1);light.position.set(-7,11,8);scene.add(light);
+const material=c=>new THREE.MeshLambertMaterial({color:c}),ground=material(0x8dac75),road=material(0xd9c092),wood=material(0x73533d),green=material(0x54874e),pink=material(0xe9a5b3);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(26,26),ground);floor.rotation.x=-Math.PI/2;scene.add(floor);
+const path=new THREE.Mesh(new THREE.PlaneGeometry(4,24),road);path.rotation.x=-Math.PI/2;path.position.y=.012;scene.add(path);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(11.7,.13,6,80),material(0xeaddb4));ring.rotation.x=Math.PI/2;ring.position.y=.04;scene.add(ring);
+for(let i=0;i<30;i++){const theta=i*2.399,rad=6.2+(i%5)*1.1,x=Math.cos(theta)*rad,z=Math.sin(theta)*rad;if(Math.abs(x)<3)continue;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.11,.15,1.4,6),wood);trunk.position.set(x,.7,z);scene.add(trunk);const top=new THREE.Mesh(new THREE.IcosahedronGeometry(.72+(i%3)*.14,0),green);top.position.set(x,1.7,z);scene.add(top)}
+for(let i=0;i<55;i++){const theta=i*5.1,r=3+(i%9)*.95,x=Math.cos(theta)*r,z=Math.sin(theta)*r;if(Math.abs(x)<2.3)continue;const stem=new THREE.Mesh(new THREE.CylinderGeometry(.012,.014,.24,4),green);stem.position.set(x,.12,z);scene.add(stem);const blossom=new THREE.Mesh(new THREE.IcosahedronGeometry(.085,0),pink);blossom.position.set(x,.27,z);scene.add(blossom)}
+const actor=new THREE.Group();actor.position.set(0,0,4);scene.add(actor);
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(.44,24),new THREE.MeshBasicMaterial({color:0x35402b,opacity:.28,transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(0,.026,4);scene.add(shadow);
+let mixer=null,walkAction=null,idleAction=null,loaded=false,walking=false,paused=false,auto=false,autoTime=0;
+const loader=new GLTFLoader();
+function error(s){el('msg').textContent=s;el('msg').style.display='block';el('status').textContent='Ошибка загрузки'}
+function ready(g){const model=g.scene;
+ // Use a static world-space bounding box before any rotation; anchor geometry to the actor centre and floor.
+ model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());if(size.y<.01)return error('Неверный размер модели');
+ const scale=1.18/size.y;model.scale.setScalar(scale);model.updateMatrixWorld(true);bounds.setFromObject(model);
+ const mid=bounds.getCenter(new THREE.Vector3());model.position.set(-mid.x,-bounds.min.y,-mid.z);
+ const holder=new THREE.Group();holder.add(model);actor.add(holder);holder.rotation.y=-Math.PI/2;
+ mixer=new THREE.AnimationMixer(model);const clips=g.animations;const w=clips.find(a=>/walk/i.test(a.name))||clips[0];const id=clips.find(a=>/idle/i.test(a.name))||clips[1];walkAction=w?mixer.clipAction(w):null;idleAction=id?mixer.clipAction(id):null;if(idleAction)idleAction.play();
+ loaded=true;el('status').textContent='Буся загружен — можешь ходить!';el('msg').style.display='none';}
+loader.load('../busya-world-v1/Busya_walk_idle_test_v1.glb?v=3',ready,undefined,e=>error('Не удалось загрузить GLB: '+(e?.message||e)));
+const joy=el('joy'),stick=el('stick');let jx=0,jy=0,activeTouch=null,pointerId=null;
+function moveStick(x,y){const b=joy.getBoundingClientRect();let dx=x-(b.left+b.width/2),dy=y-(b.top+b.height/2),r=Math.hypot(dx,dy),k=r>46?46/r:1;dx*=k;dy*=k;jx=dx/46;jy=dy/46;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
+function endStick(){activeTouch=null;pointerId=null;jx=jy=0;stick.style.transform='translate(0px,0px)'}
+joy.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();if(activeTouch!==null)return;const t=e.changedTouches[0];activeTouch=t.identifier;moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===activeTouch)moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===activeTouch)endStick()},{passive:false});
+joy.addEventListener('touchcancel',endStick,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();pointerId=e.pointerId;joy.setPointerCapture(e.pointerId);moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointermove',e=>{if(pointerId===e.pointerId)moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointerup',endStick);joy.addEventListener('pointercancel',endStick);
+el('auto').onclick=()=>{auto=!auto;autoTime=0;endStick();el('auto').textContent=auto?'■ Остановить проверку':'▶ Проверить ходьбу'};
+el('reset').onclick=()=>{actor.position.set(0,0,4);actor.rotation.y=0;endStick();auto=false;autoTime=0;el('auto').textContent='▶ Проверить ходьбу'};
+el('pause').onclick=()=>{paused=!paused;el('pause').textContent=paused?'▶ Продолжить':'⏸ Пауза'};el('cad').oninput=()=>{el('cadVal').textContent=Number(el('cad').value).toFixed(1)+'×'};
+const clock=new THREE.Clock(),cameraOffset=new THREE.Vector3(0,3.1,5.5),lookTarget=new THREE.Vector3(),desired=new THREE.Vector3();cam.position.copy(actor.position).add(cameraOffset);cam.lookAt(0,.8,4);
+function update(){requestAnimationFrame(update);const dt=Math.min(clock.getDelta(),.05);
+ if(loaded&&!paused){let x=jx,y=jy;if(auto){autoTime+=dt;y=-1;x=0;if(autoTime>6.0){auto=false;el('auto').textContent='▶ Проверить ходьбу';endStick()}}
+ const magnitude=Math.min(1,Math.hypot(x,y));const isMoving=magnitude>.1;
+ if(isMoving){const dx=x/magnitude,dz=y/magnitude; // Up on touch screen moves towards negative world Z.
+ const step=dt*1.62*magnitude;let nextX=THREE.MathUtils.clamp(actor.position.x+dx*step,-10,10),nextZ=THREE.MathUtils.clamp(actor.position.z+dz*step,-10,10);
+ actor.position.set(nextX,0,nextZ);const heading=Math.atan2(-dx,-dz);const delta=Math.atan2(Math.sin(heading-actor.rotation.y),Math.cos(heading-actor.rotation.y));actor.rotation.y+=delta*(1-Math.exp(-dt*9));
+ }
+ if(isMoving!==walking){if(isMoving&&walkAction){walkAction.reset().fadeIn(.18).play();if(idleAction&&idleAction!==walkAction)idleAction.fadeOut(.18)}else if(idleAction){idleAction.reset().fadeIn(.18).play();if(walkAction&&walkAction!==idleAction)walkAction.fadeOut(.18)}walking=isMoving}
+ if(mixer){mixer.timeScale=isMoving?Number(el('cad').value)*Math.max(.35,magnitude):1;mixer.update(dt)}
+ }
+ shadow.position.set(actor.position.x,.026,actor.position.z);
+ // Camera follows the world-space ACTOR root only. No dependence on animated bones or rotation.
+ desired.copy(actor.position).add(cameraOffset);cam.position.lerp(desired,1-Math.exp(-dt*7));lookTarget.set(actor.position.x,.72,actor.position.z);cam.lookAt(lookTarget);
+ el('pos').textContent='X: '+actor.position.x.toFixed(1)+' · Z: '+actor.position.z.toFixed(1)+(auto?' · АВТО':'');
+ renderer.render(scene,cam);
+}update();
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
