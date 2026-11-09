@@ -55,7 +55,7 @@ model.traverse(o=>{
 
  // Use a static world-space bounding box before any rotation; anchor geometry to the actor centre and floor.
  model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());if(size.y<.01)return error('Неверный размер модели');
- const scale=1.15/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);model.updateMatrixWorld(true);
+ const scale=1.55/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);model.updateMatrixWorld(true);
  // Pryanik's approved 3D gait: initialize the first WALK pose before fitting to floor.
  mixer=new THREE.AnimationMixer(model);const clips=g.animations;
  const walkClip=clips.find(c=>c.name==='Pryanik_gentle_walk_v1')||clips.find(c=>/walk/i.test(c.name))||clips[1];
@@ -69,7 +69,7 @@ model.traverse(o=>{
  const joints=distinctBones.size,walkChannels=walkClip.tracks.length;
  const legNames=[...new Set(skeletonMeshes.flatMap(o=>o.skeleton.bones.map(b=>b.name)))].filter(n=>/limb|leg|paw|foot/i.test(n));
  el('rig').textContent='Пряник: '+joints+' костей · '+clips.length+' анимаций · '+walkChannels+' каналов Walk · '+walkClip.duration.toFixed(2)+' с/цикл · костей конечностей: '+legNames.length+'. Исправление свитера V5 включено. Буся: 41 кость, 2 анимации, 20 каналов Walk.';
- loaded=true;el('status').textContent='Пряник V5 — исправленный свитер и ходьба';el('msg').style.display='none';}
+ loaded=true;el('status').textContent='Пряник V5 — исправлен свитер и размер';el('msg').style.display='none';}
 loader.load('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',ready,undefined,e=>error('Не удалось загрузить GLB: '+(e?.message||e)));
 const joy=el('joy'),stick=el('stick');let jx=0,jy=0,activeTouch=null,pointerId=null;
 function moveStick(x,y){const b=joy.getBoundingClientRect();let dx=x-(b.left+b.width/2),dy=y-(b.top+b.height/2),r=Math.hypot(dx,dy),k=r>46?46/r:1;dx*=k;dy*=k;jx=dx/46;jy=dy/46;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
