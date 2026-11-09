@@ -102,7 +102,7 @@ function createDog(id,x,z,label,color){
 const busya=createDog('busya',-1.1,1.5,'Буся','#98682c');
 const pryanik=createDog('pryanik',1.2,.9,'Пряник','#b66738');
 const loader=new GLTFLoader();
-const mongeURL='../Monge_final_20261110.glb';
+const mongeURL='../Monge_game_optimized_1k.glb';
 loader.load(mongeURL,g=>{
  try{
    const object=g.scene;
@@ -121,7 +121,7 @@ loader.load(mongeURL,g=>{
    mongeHolder.clear();
    mongeHolder.add(object);
  }catch(e){el('message').textContent='Monge: ошибка 3D-модели — '+e.message}
-},undefined,e=>{el('message').textContent='Новая модель Monge пока не загружена: добавь Monge_final_20261110.glb в корень GitHub'});
+},undefined,e=>{el('message').textContent='Новая модель Monge пока не загружена: добавь Monge_game_optimized_1k.glb в корень GitHub'});
 
 function prepareBusya(g){
  const dog=busya,model=g.scene;
