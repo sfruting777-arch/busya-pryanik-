@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Буся и Пряник — собачье поле v6</title>
+<style>
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:#b2dce0;color:#fff;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-user-select:none;user-select:none}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+#heading{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;text-align:center;text-shadow:0 2px 6px #223b32}
+h1{font-size:16px;color:#fff3be;margin:0 0 3px}#status{font-size:11px;font-weight:650}#position{font-size:11px;opacity:.85;margin-top:2px}
+#joy{position:fixed;z-index:6;left:12px;bottom:calc(16px + env(safe-area-inset-bottom));height:112px;width:112px;border:2px solid #ffe6b1;border-radius:50%;background:#344e3c9c;display:grid;place-items:center;touch-action:none}
+#stick{width:52px;height:52px;border:2px solid #fff0bc;border-radius:50%;background:#b18b50;display:grid;place-items:center;font-size:24px;pointer-events:none}
+#controls{position:fixed;z-index:6;right:8px;top:32%;display:flex;flex-direction:column;align-items:center;gap:7px;width:45px}
+button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#665140cf;font-size:22px;font-weight:700;padding:0;width:44px;height:44px;display:grid;place-items:center;touch-action:manipulation;box-shadow:0 2px 5px #27352844}
+#legend{display:none}
+#message{position:fixed;z-index:5;top:90px;left:16px;right:16px;text-align:center;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 2px 5px #284536}#score{position:fixed;z-index:5;top:calc(max(12px,env(safe-area-inset-top)) + 79px);left:12px;background:#3c5745c9;border:1px solid #ffe8b6;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;pointer-events:none}
+</style></head>
+<body>
+<div id="heading"><h1>🐻 Буся и Пряник 🐶 — собачье поле</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
+<div id="message"></div><div id="score">🥫 Monge: 0</div>
+<div id="joy"><div id="stick">🐾</div></div>
+<div id="controls"><button id="swap" title="Поменять собаку" aria-label="Поменять собаку">🎮</button><button id="view" title="Переключить камеру" aria-label="Переключить камеру">📷</button><button id="ai" title="Второй гуляет или стоит" aria-label="Второй гуляет или стоит">🐾</button><button id="reset" title="Вернуть собак" aria-label="Вернуть собак">↺</button><button id="pause" title="Пауза" aria-label="Пауза">⏸</button><div id="legend">Буся v26: плечи 80% · подъём 75% · скорость +15%<br>Пряник v5: шаги 2,8× · свитер исправлен<br>Переключай управление и камеру для осмотра со стороны</div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const el=id=>document.getElementById(id);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xadd7e5);scene.fog=new THREE.Fog(0xadd7e5,22,45);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const cam=new THREE.PerspectiveCamera(53,innerWidth/innerHeight,.05,65);
+scene.add(new THREE.HemisphereLight(0xffffff,0x71904d,2.15));
+const sun=new THREE.DirectionalLight(0xfff2d5,2.0);sun.position.set(-5,11,7);scene.add(sun);
+const mat=c=>new THREE.MeshLambertMaterial({color:c});
+const grass=mat(0x85ad69),pathMat=mat(0xd9cda4),wood=mat(0x8b674a),leaves=mat(0x4d8352),pink=mat(0xeaa7b3);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),grass);ground.rotation.x=-Math.PI/2;scene.add(ground);
+const arena=new THREE.Mesh(new THREE.CircleGeometry(7.9,64),mat(0x91b878));arena.rotation.x=-Math.PI/2;arena.position.y=.01;scene.add(arena);
+const loop=new THREE.Mesh(new THREE.TorusGeometry(7.8,.11,5,100),pathMat);loop.rotation.x=Math.PI/2;loop.position.y=.042;scene.add(loop);
+const walkPath=new THREE.Mesh(new THREE.PlaneGeometry(2,15.3),pathMat);walkPath.rotation.x=-Math.PI/2;walkPath.position.y=.022;scene.add(walkPath);
+for(let i=0;i<20;i++){const ang=i*2.4,r=8.6+(i%3)*.62,x=Math.cos(ang)*r,z=Math.sin(ang)*r;
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,1.5,6),wood);trunk.position.set(x,.75,z);scene.add(trunk);
+ const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(.8+(i%3)*.11,0),leaves);crown.position.set(x,1.8,z);scene.add(crown)}
+for(let i=0;i<40;i++){const a=i*5.1,r=5.4+(i%4)*.8,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)<1.3)continue;
+ const stem=new THREE.Mesh(new THREE.CylinderGeometry(.012,.014,.23,4),leaves);stem.position.set(x,.12,z);scene.add(stem);
+ const flower=new THREE.Mesh(new THREE.IcosahedronGeometry(.075,0),pink);flower.position.set(x,.25,z);scene.add(flower)}
+// First collectible: a small stylized Monge tin with a readable texture.
+const tinCanvas=document.createElement('canvas');tinCanvas.width=512;tinCanvas.height=256;
+const tc=tinCanvas.getContext('2d');
+tc.fillStyle='#f5e5b8';tc.fillRect(0,0,512,256);
+tc.fillStyle='#b43c3b';tc.fillRect(0,0,512,85);
+tc.fillStyle='#fff';tc.font='bold 63px system-ui';tc.textAlign='center';tc.fillText('MONGE',256,63);
+tc.fillStyle='#423c32';tc.font='bold 43px system-ui';tc.fillText('DOG FOOD',256,164);
+tc.font='34px system-ui';tc.fillText('🐾',256,216);
+const tinTexture=new THREE.CanvasTexture(tinCanvas);tinTexture.colorSpace=THREE.SRGBColorSpace;
+const pickup=new THREE.Group();
+const tinBody=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.34,24,1,true),new THREE.MeshLambertMaterial({map:tinTexture,side:THREE.DoubleSide}));tinBody.position.y=.23;pickup.add(tinBody);
+const tinTopMat=new THREE.MeshStandardMaterial({color:0xece7d7,metalness:.35,roughness:.55});
+for(const y of [.055,.4]){const lid=new THREE.Mesh(new THREE.CylinderGeometry(.242,.242,.025,24),tinTopMat);lid.position.y=y;pickup.add(lid)}
+const ring=new THREE.Mesh(new THREE.TorusGeometry(.36,.023,8,36),new THREE.MeshBasicMaterial({color:0xffe08c}));ring.rotation.x=Math.PI/2;ring.position.y=.025;pickup.add(ring);
+scene.add(pickup);
+let collected=0,collectTimer=0;
+function relocateTin(){
+ const a=Math.random()*Math.PI*2,r=1+Math.random()*4.1;
+ pickup.position.set(Math.cos(a)*r,0,Math.sin(a)*r);
+}
+pickup.position.set(0,0,-1.9);
+function checkPickup(dog){
+ if(!dog.loaded||dog.actor.position.distanceTo(pickup.position)>.65)return;
+ collected++;
+ el('score').textContent='🥫 Monge: '+collected;
+ relocateTin();collectTimer=1.35;
+}
+// End collectible test.
+// Both dogs are rooted in the same world-space metric frame.
+const dogs={};
+function marker(name,color){
+ const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');
+ ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(8,5,240,54,18);ctx.fill();
+ ctx.font='bold 30px system-ui';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,128,32);
+ const tx=new THREE.CanvasTexture(c),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));sp.scale.set(1.17,.29,1);sp.position.set(0,1.56,0);return sp;
+}
+function createDog(id,x,z,label,color){
+ const actor=new THREE.Group();actor.position.set(x,0,z);scene.add(actor);
+ const holder=new THREE.Group();actor.add(holder);
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(.40,24),new THREE.MeshBasicMaterial({color:0x293722,opacity:.25,transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(x,.033,z);scene.add(shadow);
+ const nameSprite=marker(label,color);actor.add(nameSprite);
+ return dogs[id]={id,actor,holder,shadow,nameSprite,loaded:false,mixer:null,walk:null,idle:null,moving:false};
+}
+const busya=createDog('busya',-1.1,1.5,'Буся','#98682c');
+const pryanik=createDog('pryanik',1.2,.9,'Пряник','#b66738');
+const loader=new GLTFLoader();
+function prepareBusya(g){
+ const dog=busya,model=g.scene;
+ model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+ if(size.y<.01)throw Error('Размер Буси некорректен');
+ model.scale.setScalar(1.18/size.y);model.updateMatrixWorld(true);bounds.setFromObject(model);
+ const mid=bounds.getCenter(new THREE.Vector3());model.position.set(-mid.x,-bounds.min.y+.0225,-mid.z);
+ dog.holder.add(model);dog.holder.rotation.y=-Math.PI/2;
+ const mixer=dog.mixer=new THREE.AnimationMixer(model),clips=g.animations;
+ const shoulderStrength=80,liftStrength=75;
+ const original=clips.find(a=>/walk/i.test(a.name))||clips[0];
+ let damped=0,modified=original?original.clone():null;
+ if(modified){
+   const pitchAxis=new THREE.Vector3(0,1,0);
+   const pitchQ=new THREE.Quaternion();
+   for(const track of modified.tracks){
+     const normalized=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+     const part=normalized.match(/0_(Right|Left)_Limb_([012])(?:_|$)/i);
+     if(!part||!track.name.endsWith('.quaternion'))continue;
+     const segment=Number(part[2]),isLeft=part[1].toLowerCase()==='left';
+     const values=track.values,n=values.length/4;if(n<2)continue;
+     // Preserve centre pose, suppress the imported side-flaring Z swing.
+     const centre=new THREE.Quaternion(),ref=new THREE.Quaternion().fromArray(values,0);
+     let sx=0,sy=0,sz=0,sw=0;
+     for(let k=0;k<n;k++){const q=new THREE.Quaternion().fromArray(values,k*4),sign=q.dot(ref)<0?-1:1;sx+=sign*q.x;sy+=sign*q.y;sz+=sign*q.z;sw+=sign*q.w}
+     centre.set(sx,sy,sz,sw).normalize();
+     const lateralReduction=[.72,.66,.50][segment];
+     const forwardSwing=[.19,.10,.045][segment];
+     for(let k=0;k<n;k++){
+       const q=new THREE.Quaternion().fromArray(values,k*4);
+       if(q.dot(centre)<0)q.set(-q.x,-q.y,-q.z,-q.w);
+       q.slerp(centre,lateralReduction);
+       // Alternate front feet; animate fore-aft motion around local Y, rather than sideways fan around local Z.
+       const phase=2*Math.PI*track.times[k]/Math.max(.001,modified.duration)+(isLeft?Math.PI:0);
+       const swing=forwardSwing*Math.sin(phase+(segment===1?.28:0));
+       pitchQ.setFromAxisAngle(pitchAxis,swing);
+       q.multiply(pitchQ).normalize().toArray(values,k*4);
+     }
+     damped++;
+   }
+ }
+ 
+ // Preserve the front stride and unchanged rear legs. Suppress shoulder flare only.
+ let shouldersAdjusted=0;
+ if(modified){
+  for(const track of modified.tracks){
+   const name=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+   if(!/0_(Right|Left)_Limb_0(?:_|$)/i.test(name)||!track.name.endsWith('.quaternion'))continue;
+   const vals=track.values,n=vals.length/4;
+   if(n<2)continue;
+   const ref=new THREE.Quaternion().fromArray(vals,0),centre=new THREE.Quaternion();
+   let sx=0,sy=0,sz=0,sw=0;
+   for(let i=0;i<n;i++){
+     const q=new THREE.Quaternion().fromArray(vals,i*4),sign=q.dot(ref)<0?-1:1;
+     sx+=sign*q.x;sy+=sign*q.y;sz+=sign*q.z;sw+=sign*q.w;
+   }
+   centre.set(sx,sy,sz,sw).normalize();
+   const inverse=centre.clone().invert();
+   const euler=new THREE.Euler(),d=new THREE.Quaternion();
+   for(let i=0;i<n;i++){
+     const q=new THREE.Quaternion().fromArray(vals,i*4);
+     if(q.dot(centre)<0)q.set(-q.x,-q.y,-q.z,-q.w);
+     d.copy(inverse).multiply(q).normalize();euler.setFromQuaternion(d,'XYZ');
+     euler.x*=1-.82*shoulderStrength/100;
+     euler.y*=1-.82*shoulderStrength/100;
+     d.setFromEuler(euler);
+     q.copy(centre).multiply(d).normalize().toArray(vals,i*4);
+   }
+   shouldersAdjusted++;
+  }
+ }
+ // Gentle fore-elbow bend during swing, modifying only front lower joints.
+ // Local axis and timing are experimental; lift=0 fully disables this stage.
+ let elbowTracks=0;
+ if(modified&&liftStrength>0){
+  const axis=new THREE.Vector3(1,0,0),bend=new THREE.Quaternion();
+  for(const track of modified.tracks){
+   const name=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+   const match=name.match(/0_(Right|Left)_Limb_1(?:_|$)/i);
+   if(!match||!track.name.endsWith('.quaternion'))continue;
+   const left=match[1].toLowerCase()==='left',vals=track.values;
+   for(let i=0;i<track.times.length;i++){
+    const phase=track.times[i]/Math.max(.01,modified.duration)*Math.PI*2+(left?Math.PI:0);
+    const lift=Math.pow(Math.max(0,Math.sin(phase)),1.5);
+    bend.setFromAxisAngle(axis,0.17*(liftStrength/100)*lift);
+    const q=new THREE.Quaternion().fromArray(vals,i*4);q.multiply(bend).normalize().toArray(vals,i*4);
+   }
+   elbowTracks++;
+  }
+ }
+
+ const w=modified||original, id=clips.find(a=>/idle/i.test(a.name))||clips[1];
+ dog.walk=w?mixer.clipAction(w):null;dog.idle=id?mixer.clipAction(id):null;
+ if(dog.idle)dog.idle.play();dog.loaded=true;
+}
+function preparePryanik(g){
+ const dog=pryanik,model=g.scene;
+ const repairs=[];
+model.traverse(o=>{
+ if(!o.isSkinnedMesh||o.name!=='char1')return;
+ const src=o.geometry,uv=src.attributes.uv,p=src.attributes.position,idx=src.index;
+ const faces=[];
+ const inside=k=>p.getX(k)<-.0015&&Math.pow((uv.getX(k)-.6145)/.017,2)+Math.pow((uv.getY(k)-.5895)/.015,2)<1;
+ for(let k=0;k<idx.count;k+=3){const a=idx.getX(k),b=idx.getX(k+1),c=idx.getX(k+2);if(inside(a)||inside(b)||inside(c))faces.push(a,b,c);}
+ const geo=src.clone();geo.setIndex(faces);
+ const clean=geo.attributes.uv;
+ for(let k=0;k<clean.count;k++)clean.setXY(k,clean.getX(k)+.020,clean.getY(k)+.018);
+ clean.needsUpdate=true;
+ const mat=o.material.clone();mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;mat.depthWrite=false;
+ const cover=new THREE.SkinnedMesh(geo,mat);cover.name='Sweater_clean_knit_patch';cover.renderOrder=1;
+ cover.position.copy(o.position);cover.quaternion.copy(o.quaternion);cover.scale.copy(o.scale);
+ cover.bindMode=o.bindMode;cover.bind(o.skeleton,o.bindMatrix);cover.frustumCulled=false;
+ repairs.push([o.parent,cover]);
+});
+repairs.forEach(([parent,cover])=>parent.add(cover));
+// Render lettering after the knit repair while retaining body occlusion.
+model.traverse(o=>{
+ if(!o.isMesh||!o.name.startsWith('PRYANIK_logo_'))return;
+ o.renderOrder=2;
+ o.material=o.material.clone();
+ o.material.polygonOffset=true;
+ o.material.polygonOffsetFactor=-4;
+ o.material.polygonOffsetUnits=-4;
+});
+
+
+
+ model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+ if(Math.max(size.x,size.y,size.z)<.01)throw Error('Размер Пряника некорректен');
+ model.scale.setScalar(.9765/Math.max(size.x,size.y,size.z));model.updateMatrixWorld(true);
+ const mixer=dog.mixer=new THREE.AnimationMixer(model),clips=g.animations;
+ const walkClip=clips.find(c=>c.name==='Pryanik_gentle_walk_v1')||clips.find(c=>/walk/i.test(c.name))||clips[1];
+ if(!walkClip)throw Error('Не найдена анимация Пряника');
+ dog.walk=mixer.clipAction(walkClip);dog.walk.play();mixer.update(0);
+ model.updateMatrixWorld(true);bounds.setFromObject(model);const mid=bounds.getCenter(new THREE.Vector3());
+ model.position.set(-mid.x,-bounds.min.y+.018,-mid.z);dog.holder.add(model);dog.holder.rotation.y=Math.PI;dog.loaded=true;
+}
+let failures=[];
+function refreshStatus(){
+ const count=Number(busya.loaded)+Number(pryanik.loaded);
+ el('status').textContent=count===2?'Оба героя на поле · переключай управление':count===0?'Загружаем двух артистов…':count===1?'Один герой готов · загружаем второго…':'';
+ if(failures.length)el('message').textContent=failures.join(' · ');
+}
+function loadDog(url,fn,name){loader.load(url,g=>{try{fn(g)}catch(e){failures.push(name+': '+e.message)}refreshStatus()},undefined,e=>{failures.push(name+': не загрузился GLB');refreshStatus()})}
+loadDog('../busya-world-v1/Busya_walk_idle_test_v1.glb?v=3',prepareBusya,'Буся');
+loadDog('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',preparePryanik,'Пряник');
+const joy=el('joy'),stick=el('stick');let jx=0,jy=0,activeTouch=null,pointerId=null;
+function moveStick(x,y){const r=joy.getBoundingClientRect();let dx=x-(r.left+r.width/2),dy=y-(r.top+r.height/2),d=Math.hypot(dx,dy),k=d>31?31/d:1;dx*=k;dy*=k;jx=dx/31;jy=dy/31;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
+function stopStick(){activeTouch=null;pointerId=null;jx=jy=0;stick.style.transform='translate(0px,0px)'}
+joy.addEventListener('touchstart',e=>{e.preventDefault();if(activeTouch!==null)return;const t=e.changedTouches[0];activeTouch=t.identifier;moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===activeTouch)moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===activeTouch)stopStick()},{passive:false});
+joy.addEventListener('touchcancel',stopStick,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;pointerId=e.pointerId;joy.setPointerCapture(e.pointerId);moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===pointerId)moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointerup',stopStick);joy.addEventListener('pointercancel',stopStick);
+let paused=false,aiEnabled=true,view=0,controlled='busya';
+const roaming={busya:{target:new THREE.Vector3(),stop:0,reactCooldown:0,reacting:0},pryanik:{target:new THREE.Vector3(),stop:0,reactCooldown:0,reacting:0}};
+let encounterText='';
+function randomDestination(id){
+ const a=Math.random()*Math.PI*2,r=1+Math.random()*4.8;
+ roaming[id].target.set(Math.cos(a)*r,0,Math.sin(a)*r);
+}
+randomDestination('busya');randomDestination('pryanik');
+function controlledDog(){return dogs[controlled]}
+function roamingDog(){return dogs[controlled==='busya'?'pryanik':'busya']}
+function updateLabels(){
+ const main=controlled==='busya'?'Бусей':'Пряником';
+ const other=controlled==='busya'?'Пряник':'Буся';
+ el('swap').textContent='🎮';el('swap').title='Управляю '+main+' — нажми, чтобы сменить';
+ el('ai').textContent=aiEnabled?'🐾':'🛑';el('ai').title=other+': '+(aiEnabled?'гуляет':'стоит');
+}
+el('swap').onclick=()=>{
+ controlled=controlled==='busya'?'pryanik':'busya';
+ stopStick();
+ randomDestination(roamingDog().id);
+ roaming[roamingDog().id].stop=.6;
+ roaming[roamingDog().id].reactCooldown=1.5;encounterText='';
+ updateLabels();
+};
+el('view').onclick=()=>{view=(view+1)%3;el('view').textContent=['📷','👁️','↔️'][view];el('view').title=['Общий обзор','За героем','Вид спереди'][view]};
+el('ai').onclick=()=>{aiEnabled=!aiEnabled;if(!aiEnabled){encounterText='';roaming[roamingDog().id].reacting=0}updateLabels()};
+el('pause').onclick=()=>{paused=!paused;el('pause').textContent=paused?'▶':'⏸';el('pause').title=paused?'Продолжить':'Пауза'};
+el('reset').onclick=()=>{
+ busya.actor.position.set(-1.1,0,1.5);
+ pryanik.actor.position.set(1.2,0,.9);
+ busya.actor.rotation.y=0;pryanik.actor.rotation.y=0;
+ stopStick();encounterText='';collected=0;el('score').textContent='🥫 Monge: 0';pickup.position.set(0,0,-1.9);for(const id of ['busya','pryanik']){roaming[id].stop=0;roaming[id].reacting=0;roaming[id].reactCooldown=1;randomDestination(id)}
+};
+updateLabels();
+function walkDog(dog,isMoving,dt,speed){
+ if(!dog.loaded)return;
+ if(dog.id==='busya'){
+  if(isMoving!==dog.moving){
+   if(isMoving&&dog.walk){dog.walk.reset().fadeIn(.18).play();if(dog.idle)dog.idle.fadeOut(.18)}
+   else if(dog.idle){dog.idle.reset().fadeIn(.18).play();if(dog.walk)dog.walk.fadeOut(.18)}
+  }
+  dog.mixer.timeScale=isMoving?2.8*Math.max(.35,speed/2.14245):1;dog.mixer.update(dt);
+ }else{
+  if(isMoving!==dog.moving){
+   dog.walk.reset().play();dog.mixer.update(0);
+  }
+  if(isMoving){dog.mixer.timeScale=2.8;dog.mixer.update(dt)}
+ }
+ dog.moving=isMoving;
+}
+function moveActor(dog,dx,dz,step,dt){
+ const a=dog.actor;const boundary=6.65;
+ a.position.x=THREE.MathUtils.clamp(a.position.x+dx*step,-boundary,boundary);
+ a.position.z=THREE.MathUtils.clamp(a.position.z+dz*step,-boundary,boundary);
+ const heading=Math.atan2(-dx,-dz),delta=Math.atan2(Math.sin(heading-a.rotation.y),Math.cos(heading-a.rotation.y));
+ a.rotation.y+=delta*(1-Math.exp(-dt*8));
+}
+const clock=new THREE.Clock(),desired=new THREE.Vector3(),target=new THREE.Vector3();
+cam.position.set(0,6.8,11);cam.lookAt(0,.7,0);
+function animate(){
+ requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);
+ const player=controlledDog(),npc=roamingDog();
+ if(!paused){
+   const mag=Math.min(1,Math.hypot(jx,jy)),moving=mag>.12;
+   const playerSpeed=player.id==='busya'?2.14245:1.863;
+   if(moving&&player.loaded){
+     // Move relative to the camera's horizontal view direction:
+     // up = away from the screen, right = screen right, even in front view.
+     const forward=new THREE.Vector3();
+     cam.getWorldDirection(forward);forward.y=0;forward.normalize();
+     const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
+     const dir=forward.multiplyScalar(-jy/mag).addScaledVector(right,jx/mag).normalize();
+     moveActor(player,dir.x,dir.z,dt*playerSpeed*mag,dt);
+   }
+   walkDog(player,moving,dt,playerSpeed*mag);
+   let npcMoving=false;
+   if(aiEnabled&&npc.loaded&&player.loaded){
+     const nav=roaming[npc.id];
+     nav.reactCooldown=Math.max(0,nav.reactCooldown-dt);
+     const separation=npc.actor.position.distanceTo(player.actor.position);
+     // First real dog-to-dog interaction. A short look, then a distinct response.
+     // Pryanik is timid and trots away; Busya is curious and approaches.
+     if(separation<1.55&&nav.reactCooldown===0&&nav.reacting===0){
+       nav.reacting=1;nav.stop=.6;nav.reactCooldown=4.5;
+       encounterText=npc.id==='pryanik'?'🐶 Пряник заметил Бусю!':'🐻 Буся заметил Пряника!';
+     }
+     if(nav.reacting===1){
+       // Face player while looking; only rotate root, never change skeleton.
+       const toward=player.actor.position.clone().sub(npc.actor.position);
+       const heading=Math.atan2(-toward.x,-toward.z),delta=Math.atan2(Math.sin(heading-npc.actor.rotation.y),Math.cos(heading-npc.actor.rotation.y));
+       npc.actor.rotation.y+=delta*(1-Math.exp(-dt*7));
+       nav.stop=Math.max(0,nav.stop-dt);
+       if(nav.stop===0){nav.reacting=2;nav.stop=npc.id==='pryanik'?1.2:1.0}
+     }else if(nav.reacting===2){
+       nav.stop=Math.max(0,nav.stop-dt);
+       const away=npc.actor.position.clone().sub(player.actor.position);away.y=0;
+       let speed;
+       if(npc.id==='pryanik'){
+         speed=1.18;
+         if(away.lengthSq()<.01)away.set(1,0,0);
+         away.normalize();
+       }else{
+         speed=.85;
+         if(separation<.9){nav.stop=0;away.set(0,0,0)}
+         else away.normalize().negate();
+       }
+       if(away.lengthSq()>.01){moveActor(npc,away.x,away.z,dt*speed,dt);npcMoving=true}
+       if(nav.stop===0){nav.reacting=0;randomDestination(npc.id);nav.stop=1.0;encounterText=''}
+     }else{
+       if(nav.stop>0)nav.stop=Math.max(0,nav.stop-dt);
+       else{
+         const diff=nav.target.clone().sub(npc.actor.position);diff.y=0;
+         const distance=diff.length();
+         if(distance<.28){nav.stop=.8+Math.random()*2.0;randomDestination(npc.id)}
+         else{
+           const speed=npc.id==='busya'?1.42:.85;
+           const step=Math.min(distance,dt*speed);
+           diff.normalize();moveActor(npc,diff.x,diff.z,step,dt);npcMoving=true;
+         }
+       }
+     }
+   }
+   walkDog(npc,npcMoving,dt,npc.id==='busya'?1.42:.85);
+   if(collectTimer>0)collectTimer=Math.max(0,collectTimer-dt);
+   else checkPickup(player);
+ }
+ pickup.rotation.y+=dt*.45;
+ pickup.position.y=.025+Math.sin(clock.elapsedTime*2.2)*.033;
+ for(const d of [busya,pryanik])d.shadow.position.set(d.actor.position.x,.033,d.actor.position.z);
+ const centre=new THREE.Vector3().addVectors(busya.actor.position,pryanik.actor.position).multiplyScalar(.5);
+ if(view===0){desired.set(centre.x,6.8,centre.z+11);target.set(centre.x,.65,centre.z)}
+ else if(view===1){desired.copy(player.actor.position).add(new THREE.Vector3(0,3.7,6.1));target.copy(player.actor.position).add(new THREE.Vector3(0,.65,0))}
+ else {desired.set(centre.x,3.3,centre.z-8);target.set(centre.x,.75,centre.z)}
+ const factor=1-Math.exp(-dt*3.5);cam.position.lerp(desired,factor);cam.lookAt(target);
+ el('position').textContent=(controlled==='busya'?'🎮 Буся':'🎮 Пряник')+' · '+(encounterText&&aiEnabled?encounterText:'второй '+(aiEnabled?'гуляет':'отдыхает'));
+ renderer.render(scene,cam);
+}
+animate();
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
