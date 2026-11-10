@@ -352,7 +352,8 @@ loader.load(newPryanikURL,g=>{
   bbox.setFromObject(model);
   const mid=bbox.getCenter(new THREE.Vector3());
   model.position.set(-mid.x,-bbox.min.y+.018,-mid.z);
-  model.rotation.y=Math.PI;
+  // The holder already rotates Pryanik by PI; do not rotate the new GLB a second time.
+  model.rotation.y=0;
   // One additional static mesh within the same actor; no animation skin yet.
   model.visible=false;
   pryanik.holder.add(model);
