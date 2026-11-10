@@ -10,12 +10,12 @@ h1{font-size:16px;color:#fff3be;margin:0 0 3px}#status{font-size:11px;font-weigh
 #stick{width:52px;height:52px;border:2px solid #fff0bc;border-radius:50%;background:#b18b50;display:grid;place-items:center;font-size:24px;pointer-events:none}
 #controls{position:fixed;z-index:6;right:8px;top:32%;display:flex;flex-direction:column;align-items:center;gap:7px;width:45px}
 button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#665140cf;font-size:22px;font-weight:700;padding:0;width:44px;height:44px;display:grid;place-items:center;touch-action:manipulation;box-shadow:0 2px 5px #27352844}
-#model-switch{position:fixed;z-index:7;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 123px);width:auto;min-width:155px;padding:0 10px;font-size:13px;background:#4d725bcf;border-radius:10px}#legend{display:none}
+#model-switch{position:fixed;z-index:7;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 123px);width:auto;min-width:155px;padding:0 10px;font-size:13px;background:#4d725bcf;border-radius:10px}#rotate-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 174px);display:flex;gap:7px}#rotate-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#legend{display:none}
 #message{position:fixed;z-index:5;top:90px;left:16px;right:16px;text-align:center;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 2px 5px #284536}#score{position:fixed;z-index:5;top:calc(max(12px,env(safe-area-inset-top)) + 79px);left:12px;background:#3c5745c9;border:1px solid #ffe8b6;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;pointer-events:none}
 </style></head>
 <body>
 <div id="heading"><h1>🐻 Буся и Пряник 🐶 — Monge 3D v18 · Тест Пряника 2.0</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
-<div id="message"></div><button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="score">🥫 Monge: 0</div>
+<div id="message"></div><button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="score">🥫 Monge: 0</div>
 <div id="joy"><div id="stick">🐾</div></div>
 <div id="controls"><button id="swap" title="Поменять собаку" aria-label="Поменять собаку">🎮</button><button id="view" title="Переключить камеру" aria-label="Переключить камеру">📷</button><button id="ai" title="Второй гуляет или стоит" aria-label="Второй гуляет или стоит">🐾</button><button id="reset" title="Вернуть собак" aria-label="Вернуть собак">↺</button><button id="pause" title="Пауза" aria-label="Пауза">⏸</button><div id="legend">Буся v26: плечи 80% · подъём 75% · скорость +15%<br>Пряник v5: шаги 2,8× · свитер исправлен<br>Переключай управление и камеру для осмотра со стороны</div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
@@ -371,6 +371,22 @@ el('model-switch').onclick=()=>{
  el('model-switch').textContent=usingNewPryanik?'✨ Пряник 2.0 (без анимации)':'🐶 Пряник 1.0 (анимация)';
  el('message').textContent=usingNewPryanik?'Пряник 2.0: пока скользит — скелет и ходьбу сделаем позже':'';
 };
+
+// Calibration controls: test axis conventions on the actual iPhone before choosing a permanent heading.
+let pryanikYawDeg=0;
+function rotateNewPryanik(degrees){
+ if(!newPryanikModel){el('message').textContent='Дождись загрузки Пряника 2.0';return;}
+ if(!usingNewPryanik){
+  usingNewPryanik=true;
+  pryanik.holder.children.forEach(child=>{child.visible=child===newPryanikModel});
+  el('model-switch').textContent='✨ Пряник 2.0 (без анимации)';
+ }
+ pryanikYawDeg=(pryanikYawDeg+degrees)%360;
+ newPryanikModel.rotation.y=THREE.MathUtils.degToRad(pryanikYawDeg);
+ el('message').textContent='Поворот новой модели: '+pryanikYawDeg+'° · Проверь направление движения';
+}
+el('turn180').onclick=()=>rotateNewPryanik(180);
+el('turn90').onclick=()=>rotateNewPryanik(90);
 
 const joy=el('joy'),stick=el('stick');let jx=0,jy=0,activeTouch=null,pointerId=null;
 function moveStick(x,y){const r=joy.getBoundingClientRect();let dx=x-(r.left+r.width/2),dy=y-(r.top+r.height/2),d=Math.hypot(dx,dy),k=d>31?31/d:1;dx*=k;dy*=k;jx=dx/31;jy=dy/31;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
