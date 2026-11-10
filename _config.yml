@@ -1,0 +1,5 @@
+# Keep large experimental dog models in GitHub but outside GitHub Pages deployment.
+# Test viewers load these directly from raw.githubusercontent.com.
+exclude:
+  - Pryanik_2_game_balanced.glb
+  - Pryanik_2_rig_walk_UPLOAD.glb
