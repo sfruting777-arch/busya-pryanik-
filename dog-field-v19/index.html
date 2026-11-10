@@ -14,7 +14,7 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 #message{position:fixed;z-index:5;top:90px;left:16px;right:16px;text-align:center;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 2px 5px #284536}#score{position:fixed;z-index:5;top:calc(max(12px,env(safe-area-inset-top)) + 79px);left:12px;background:#3c5745c9;border:1px solid #ffe8b6;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;pointer-events:none}
 </style></head>
 <body>
-<div id="heading"><h1>🐻 Буся и Пряник 🐶 — Monge 3D v19 · Пряник Eye v10</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
+<div id="heading"><h1>🐻 Буся и Пряник 🐶 — Monge 3D v19 · Пряник Eye v10 · лапы +20%</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
 <div id="message"></div><button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="score">🥫 Monge: 0</div>
 <div id="joy"><div id="stick">🐾</div></div>
 <div id="controls"><button id="swap" title="Поменять собаку" aria-label="Поменять собаку">🎮</button><button id="view" title="Переключить камеру" aria-label="Переключить камеру">📷</button><button id="ai" title="Второй гуляет или стоит" aria-label="Второй гуляет или стоит">🐾</button><button id="reset" title="Вернуть собак" aria-label="Вернуть собак">↺</button><button id="pause" title="Пауза" aria-label="Пауза">⏸</button><div id="legend">Буся v26: плечи 80% · подъём 75% · скорость +15%<br>Пряник v5: шаги 2,8× · свитер исправлен<br>Переключай управление и камеру для осмотра со стороны</div></div>
@@ -450,7 +450,7 @@ function walkDog(dog,isMoving,dt,speed){
   if(isMoving!==dog.moving){
    dog.walk.reset().play();dog.mixer.update(0);
   }
-  if(isMoving){dog.mixer.timeScale=usingNewPryanik?1:2.8;dog.mixer.update(dt)}
+  if(isMoving){dog.mixer.timeScale=usingNewPryanik?1.20:2.8;dog.mixer.update(dt)}
  }
  dog.moving=isMoving;
 }
