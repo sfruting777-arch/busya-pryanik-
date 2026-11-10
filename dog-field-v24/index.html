@@ -25,6 +25,11 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 #debug-drawer #head-tools{flex-wrap:nowrap;gap:5px}
 #debug-drawer #head-tools input{width:55px;flex:1;min-width:40px;touch-action:pan-x}
 #debug-drawer #head-tools span{min-width:25px}
+#debug-drawer #camera-zoom-tools{position:static!important;display:flex;gap:8px;align-items:center;justify-content:space-between;width:100%;min-width:0;padding:4px 0}
+#debug-drawer #camera-zoom-tools button{position:static!important;width:50px;min-width:45px;height:43px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;background:#3f7467f0;font-size:23px}
+#debug-drawer #camera-zoom-tools #cam-reset{font-size:19px;width:42px;min-width:38px}
+#debug-drawer #cam-zoom-label{flex:1;text-align:center;font-size:13px;white-space:nowrap}
+
 #heading h1{font-size:14px}
 #message{top:calc(max(12px,env(safe-area-inset-top)) + 91px);font-size:11px}
 </style></head>
@@ -34,7 +39,7 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 <button id="settings-toggle" aria-controls="debug-drawer" aria-expanded="false" type="button">⚙️ Настройки</button>
 <div id="debug-drawer" hidden>
   <div class="drawer-title">🐶 Настройки Пряника <button id="settings-close" type="button" aria-label="Закрыть настройки">✕</button></div>
-  <button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="gait-tools"><button id="gait" type="button">🐾 Походка v20 · новая</button></div><div id="head-tools"><button id="head-toggle" type="button">🐶 Голова · живая</button><input id="head-yaw" type="range" min="-12" max="12" value="12" step="2" aria-label="Выпрямление головы"><span id="head-degree" style="font-size:11px">12°</span></div><div id="tail-tools"><button id="tail-toggle" type="button">🦊 Хвост · виляет</button><button id="tail-strength" type="button">⚡ Активно</button></div><div id="sweater-tools"><button id="sweater-toggle" type="button">🧶 Надпись · ярче</button></div>
+  <button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="gait-tools"><button id="gait" type="button">🐾 Походка v20 · новая</button></div><div id="head-tools"><button id="head-toggle" type="button">🐶 Голова · живая</button><input id="head-yaw" type="range" min="-12" max="12" value="12" step="2" aria-label="Выпрямление головы"><span id="head-degree" style="font-size:11px">12°</span></div><div id="tail-tools"><button id="tail-toggle" type="button">🦊 Хвост · виляет</button><button id="tail-strength" type="button">⚡ Активно</button></div><div id="sweater-tools"><button id="sweater-toggle" type="button">🧶 Надпись · ярче</button></div><div id="camera-zoom-tools"><button id="cam-plus" type="button" aria-label="Приблизить камеру">＋</button><span id="cam-zoom-label">Камера 100%</span><button id="cam-minus" type="button" aria-label="Отдалить камеру">−</button><button id="cam-reset" type="button">↺</button></div>
 </div>
 <div id="score">🥫 Monge: 0</div>
 <div id="joy"><div id="stick">🐾</div></div>
@@ -638,6 +643,14 @@ function moveActor(dog,dx,dz,step,dt){
  a.rotation.y+=delta*(1-Math.exp(-dt*8));
 }
 const clock=new THREE.Clock(),desired=new THREE.Vector3(),target=new THREE.Vector3();
+let cameraZoom=1;
+function setCameraZoom(next){
+ cameraZoom=Math.min(2,Math.max(.30,Math.round(next*100)/100));
+ el('cam-zoom-label').textContent='Камера '+Math.round(100/cameraZoom)+'%';
+}
+el('cam-plus').onclick=()=>setCameraZoom(cameraZoom-.15);
+el('cam-minus').onclick=()=>setCameraZoom(cameraZoom+.15);
+el('cam-reset').onclick=()=>setCameraZoom(1);
 cam.position.set(0,6.8,11);cam.lookAt(0,.7,0);
 function animate(){
  requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);
@@ -726,9 +739,14 @@ function animate(){
  }else flash.visible=false;
  for(const d of [busya,pryanik])d.shadow.position.set(d.actor.position.x,.033,d.actor.position.z);
  const centre=new THREE.Vector3().addVectors(busya.actor.position,pryanik.actor.position).multiplyScalar(.5);
- if(view===0){desired.set(centre.x,6.8,centre.z+11);target.set(centre.x,.65,centre.z)}
- else if(view===1){desired.copy(player.actor.position).add(new THREE.Vector3(0,3.7,6.1));target.copy(player.actor.position).add(new THREE.Vector3(0,.65,0))}
- else {desired.set(centre.x,3.3,centre.z-8);target.set(centre.x,.75,centre.z)}
+ // Camera inspection: close-ups follow Pryanik rather than framing both dogs.
+ // Gameplay speed, directions and animation are not modified.
+ const anchor=(cameraZoom<.85?pryanik.actor.position:(view===1?player.actor.position:centre));
+ const pivotY=cameraZoom<.85?.73:.65;
+ target.set(anchor.x,pivotY,anchor.z);
+ if(view===0)desired.copy(target).add(new THREE.Vector3(0,6.8-pivotY,11).multiplyScalar(cameraZoom));
+ else if(view===1)desired.copy(target).add(new THREE.Vector3(0,3.7-pivotY,6.1).multiplyScalar(cameraZoom));
+ else desired.copy(target).add(new THREE.Vector3(0,3.3-pivotY,-8).multiplyScalar(cameraZoom));
  const factor=1-Math.exp(-dt*3.5);cam.position.lerp(desired,factor);cam.lookAt(target);
  el('position').textContent=(controlled==='busya'?'🎮 Буся':'🎮 Пряник')+' · '+(encounterText&&aiEnabled?encounterText:'второй '+(aiEnabled?'гуляет':'отдыхает'));
  renderer.render(scene,cam);
