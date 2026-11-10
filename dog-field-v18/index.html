@@ -337,7 +337,8 @@ loadDog('../busya-world-v1/Busya_walk_idle_test_v1.glb?v=3',prepareBusya,'Бус
 loadDog('../pryanik-walk-test-v1/Pryanik_walk_compare.glb?v=lettered-v2',preparePryanik,'Пряник');
 // v18 temporary comparison, never overwrite the approved Pryanik v1 GLB.
 let newPryanikModel=null,usingNewPryanik=false;
-const newPryanikURL='../Pryanik_2_game_balanced.glb';
+const newPryanikURL='https://raw.githubusercontent.com/sfruting777-arch/busya-pryanik-/main/Pryanik_2_game_balanced.glb';
+el('model-switch').textContent='⏳ Пряник 2.0 загружается…';
 loader.load(newPryanikURL,g=>{
  try{
   const model=g.scene;
@@ -358,10 +359,10 @@ loader.load(newPryanikURL,g=>{
   newPryanikModel=model;
   el('model-switch').textContent='🐶 Пряник 1.0 ↔ 2.0';
  }catch(e){el('message').textContent='Новый Пряник: '+e.message}
-},undefined,e=>{el('message').textContent='Для теста загрузи Pryanik_2_game_balanced.glb в корень GitHub'});
+},xhr=>{if(xhr.total>0)el('model-switch').textContent='⏳ Пряник 2.0: '+Math.round(100*xhr.loaded/xhr.total)+'%';},e=>{el('model-switch').textContent='⚠️ Ошибка загрузки';el('message').textContent='Не удалось загрузить Пряника 2.0: '+(e?.message||'ошибка сети')});
 el('model-switch').onclick=()=>{
  if(!newPryanikModel){
-  el('message').textContent='Сначала загрузи Pryanik_2_game_balanced.glb в корень GitHub';
+  el('message').textContent='Модель пока не готова. Дождись завершения загрузки или посмотри ошибку выше.';
   return;
  }
  usingNewPryanik=!usingNewPryanik;
