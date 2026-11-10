@@ -12,10 +12,31 @@ h1{font-size:16px;color:#fff3be;margin:0 0 3px}#status{font-size:11px;font-weigh
 button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#665140cf;font-size:22px;font-weight:700;padding:0;width:44px;height:44px;display:grid;place-items:center;touch-action:manipulation;box-shadow:0 2px 5px #27352844}
 #model-switch{position:fixed;z-index:7;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 123px);width:auto;min-width:155px;padding:0 10px;font-size:13px;background:#4d725bcf;border-radius:10px}#tail-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 310px);display:flex;gap:7px}#tail-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#head-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 264px);display:flex;gap:6px;align-items:center}#head-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#head-tools input{width:86px;accent-color:#ffe0a2}#gait-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 216px);display:flex;gap:7px}#gait-tools button{height:40px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#rotate-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 174px);display:flex;gap:7px}#rotate-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#legend{display:none}
 #message{position:fixed;z-index:5;top:90px;left:16px;right:16px;text-align:center;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 2px 5px #284536}#score{position:fixed;z-index:5;top:calc(max(12px,env(safe-area-inset-top)) + 79px);left:12px;background:#3c5745c9;border:1px solid #ffe8b6;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;pointer-events:none}
+
+/* Mobile-first: hide ALL experimental switches while watching the animation. */
+#settings-toggle{position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 113px);left:12px;z-index:11;width:auto;height:36px;padding:0 12px;font-size:12px;background:#2d665aca;border-radius:11px}
+#debug-drawer[hidden]{display:none!important}
+#debug-drawer{position:fixed;z-index:12;top:calc(max(12px,env(safe-area-inset-top)) + 156px);left:10px;right:64px;max-height:min(430px,63dvh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:flex;flex-direction:column;gap:9px;padding:12px;border-radius:15px;background:#263d38eb;border:1px solid #ffe0a2;box-shadow:0 8px 32px #123a3855}
+#debug-drawer .drawer-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
+#debug-drawer .drawer-title button{width:30px;height:30px;flex:none;font-size:15px}
+#debug-drawer #model-switch,#debug-drawer #rotate-tools,#debug-drawer #gait-tools,#debug-drawer #head-tools,#debug-drawer #tail-tools{position:static!important;z-index:auto!important;left:auto!important;top:auto!important;display:flex;flex-wrap:wrap;width:100%;min-width:0}
+#debug-drawer #model-switch{height:40px;justify-content:center}
+#debug-drawer #rotate-tools button,#debug-drawer #gait-tools button,#debug-drawer #head-tools button,#debug-drawer #tail-tools button{height:37px;max-width:100%;white-space:normal}
+#debug-drawer #head-tools{flex-wrap:nowrap;gap:5px}
+#debug-drawer #head-tools input{width:55px;flex:1;min-width:40px;touch-action:pan-x}
+#debug-drawer #head-tools span{min-width:25px}
+#heading h1{font-size:14px}
+#message{top:calc(max(12px,env(safe-area-inset-top)) + 91px);font-size:11px}
 </style></head>
 <body>
 <div id="heading"><h1>🐻 Буся и Пряник 🐶 — Monge 3D v22 · Живой хвост Пряника</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
-<div id="message"></div><button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="gait-tools"><button id="gait" type="button">🐾 Походка v20 · новая</button></div><div id="head-tools"><button id="head-toggle" type="button">🐶 Голова · живая</button><input id="head-yaw" type="range" min="-12" max="12" value="12" step="2" aria-label="Выпрямление головы"><span id="head-degree" style="font-size:11px">12°</span></div><div id="tail-tools"><button id="tail-toggle" type="button">🦊 Хвост · виляет</button><button id="tail-strength" type="button">🌿 Мягко</button></div><div id="score">🥫 Monge: 0</div>
+<div id="message"></div>
+<button id="settings-toggle" aria-controls="debug-drawer" aria-expanded="false" type="button">⚙️ Настройки</button>
+<div id="debug-drawer" hidden>
+  <div class="drawer-title">🐶 Настройки Пряника <button id="settings-close" type="button" aria-label="Закрыть настройки">✕</button></div>
+  <button id="model-switch" type="button" aria-label="Сравнить Пряника 1.0 и 2.0">🐶 Пряник 1.0 ↔ 2.0</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="gait-tools"><button id="gait" type="button">🐾 Походка v20 · новая</button></div><div id="head-tools"><button id="head-toggle" type="button">🐶 Голова · живая</button><input id="head-yaw" type="range" min="-12" max="12" value="12" step="2" aria-label="Выпрямление головы"><span id="head-degree" style="font-size:11px">12°</span></div><div id="tail-tools"><button id="tail-toggle" type="button">🦊 Хвост · виляет</button><button id="tail-strength" type="button">🌿 Мягко</button></div>
+</div>
+<div id="score">🥫 Monge: 0</div>
 <div id="joy"><div id="stick">🐾</div></div>
 <div id="controls"><button id="swap" title="Поменять собаку" aria-label="Поменять собаку">🎮</button><button id="view" title="Переключить камеру" aria-label="Переключить камеру">📷</button><button id="ai" title="Второй гуляет или стоит" aria-label="Второй гуляет или стоит">🐾</button><button id="reset" title="Вернуть собак" aria-label="Вернуть собак">↺</button><button id="pause" title="Пауза" aria-label="Пауза">⏸</button><div id="legend">Буся v26: плечи 80% · подъём 75% · скорость +15%<br>Пряник v5: шаги 2,8× · свитер исправлен<br>Переключай управление и камеру для осмотра со стороны</div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
@@ -23,6 +44,11 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const el=id=>document.getElementById(id);
+const settingsDrawer=el('debug-drawer'),settingsButton=el('settings-toggle');
+function showSettings(open){settingsDrawer.hidden=!open;settingsButton.setAttribute('aria-expanded',String(open));settingsButton.textContent=open?'✕ Скрыть настройки':'⚙️ Настройки'}
+settingsButton.onclick=()=>showSettings(settingsDrawer.hidden);
+el('settings-close').onclick=()=>showSettings(false);
+
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xadd7e5);scene.fog=new THREE.Fog(0xadd7e5,22,45);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;
