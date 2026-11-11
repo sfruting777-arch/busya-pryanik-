@@ -44,12 +44,13 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 #debug-drawer #cam-zoom-label{flex:1;text-align:center;font-size:13px;white-space:nowrap}
 
 #heading h1{font-size:14px}
+#status[hidden]{display:none!important}
 #fp-hint{position:fixed;z-index:5;left:50%;top:calc(max(12px,env(safe-area-inset-top)) + 115px);transform:translateX(-50%);max-width:230px;text-align:center;border-radius:11px;padding:7px 10px;font-size:11px;background:#264c40be;pointer-events:none}#fp-hint[hidden]{display:none!important}
 #minimap{position:fixed;z-index:5;left:auto;bottom:auto;right:60px;top:calc(max(12px,env(safe-area-inset-top)) + 70px);width:94px;height:94px;padding:4px;border:1px solid #ffe0a2;border-radius:10px;background:#335b43d5;pointer-events:none}
 #message{top:calc(max(12px,env(safe-area-inset-top)) + 91px);font-size:11px}
 </style></head>
 <body>
-<div id="heading"><h1>🐻 Буся и Пряник 🐶 — Monge 3D v36 · Умные герои</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
+<div id="heading"><h1>🐻 Буся и Пряник 🐶 · Сад v36</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
 <div id="message"></div>
 <div id="load-panel" hidden><div id="load-title">🐾 Загружаем героев…</div>
 <div class="loading-line"><label>🐻 Буся</label><progress id="load-busya" value="0" max="100"></progress><span id="percent-busya">0%</span></div>
@@ -270,6 +271,7 @@ const modelLoadState={
 };
 const modelKind=url=>url.includes('busya-world-v1/')?'busya':url.includes('Pryanik_2_rig_walk_UPLOAD.glb')?'new':null;
 const modelLabels={busya:'Буся',new:'Пряник 2.0'};
+let hideLoadStatusScheduled=false;
 function displayModelLoading(){
  const keys=['busya','new'];
  const finished=keys.every(k=>modelLoadState[k].ready||modelLoadState[k].failed);
@@ -285,6 +287,10 @@ function displayModelLoading(){
  }else{
   const cached=keys.filter(k=>modelLoadState[k].cache).length;
   el('status').textContent='🐾 Герои загружены'+(cached?' · '+cached+'/2 из кэша':'');
+  if(!hideLoadStatusScheduled){
+   hideLoadStatusScheduled=true;
+   setTimeout(()=>{if(busya.loaded&&pryanik.loaded)el('status').hidden=true},2500);
+  }
  }
 }
 function reportModelProgress(kind,value,cached=false){
