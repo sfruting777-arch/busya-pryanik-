@@ -236,7 +236,7 @@ function checkPickup(dog){
   break;
  }
 }
-buildFood();
+// Build collectibles after the selected dog and controls are initialized.
 // End collectible test.
 // Both dogs are rooted in the same world-space metric frame.
 const dogs={};
@@ -747,7 +747,7 @@ el('reset').onclick=()=>{
  busya.actor.rotation.y=0;pryanik.actor.rotation.y=0;
  stopStick();encounterText='';collected=0;foodTaken.clear();refreshFood();buildFood();el('message').textContent='';for(const id of ['busya','pryanik']){roaming[id].stop=0;roaming[id].reacting=0;roaming[id].reactCooldown=1;randomDestination(id)}
 };
-updateLabels();refreshFood();
+updateLabels();refreshFood();buildFood();
 function walkDog(dog,isMoving,dt,speed){
  if(!dog.loaded)return;
  if(dog.id==='pryanik'&&usingNewPryanik){
