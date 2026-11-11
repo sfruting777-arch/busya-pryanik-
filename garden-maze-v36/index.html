@@ -792,10 +792,54 @@ joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;pointer
 joy.addEventListener('pointermove',e=>{if(e.pointerId===pointerId)moveStick(e.clientX,e.clientY)});
 joy.addEventListener('pointerup',stopStick);joy.addEventListener('pointercancel',stopStick);
 let paused=false,aiEnabled=true,view=1,controlled='pryanik'; // view=2: first-person mode
-const roaming={busya:{target:new THREE.Vector3(),stop:0,reactCooldown:0,reacting:0},pryanik:{target:new THREE.Vector3(),stop:0,reactCooldown:0,reacting:0}};
+const roaming={
+ busya:{target:new THREE.Vector3(),route:[],stop:0,reactCooldown:0,reacting:0,stuck:0},
+ pryanik:{target:new THREE.Vector3(),route:[],stop:0,reactCooldown:0,reacting:0,stuck:0}
+};
 let encounterText='';
+const navKey=(x,z)=>x+','+z,navDirections=[[1,0],[-1,0],[0,1],[0,-1]];
+const navTile=p=>[Math.max(1,Math.min(21,Math.round(p.x/TILE+MID))),Math.max(1,Math.min(21,Math.round(p.z/TILE+MID)))];
+const navWalkable=(x,z)=>x>0&&x<22&&z>0&&z<22&&!maze[z][x]&&Math.hypot(mazeCoord(x),mazeCoord(z))>1.8;
+function navNearest(p){
+ const [x,z]=navTile(p);if(navWalkable(x,z))return[x,z];
+ let best=null,dist=Infinity;
+ for(let iz=1;iz<22;iz++)for(let ix=1;ix<22;ix++)if(navWalkable(ix,iz)){
+  const d=(ix-x)**2+(iz-z)**2;if(d<dist){dist=d;best=[ix,iz]}
+ }
+ return best;
+}
+// Breadth-first search is shortest-path on our equally weighted maze cells.
+function findMazeRoute(startPosition,goalPosition){
+ const startCell=navNearest(startPosition),goalCell=navNearest(goalPosition);
+ if(!startCell||!goalCell)return [];
+ const startKey=navKey(...startCell),endKey=navKey(...goalCell);
+ const queue=[startCell],parents=new Map([[startKey,null]]);
+ for(let i=0;i<queue.length;i++){
+  const [x,z]=queue[i],key=navKey(x,z);
+  if(key===endKey)break;
+  for(const [dx,dz] of navDirections){
+   const xx=x+dx,zz=z+dz,k=navKey(xx,zz);
+   if(!navWalkable(xx,zz)||parents.has(k))continue;
+   parents.set(k,key);queue.push([xx,zz]);
+  }
+ }
+ if(!parents.has(endKey))return [];
+ const result=[];
+ for(let key=endKey;key&&key!==startKey;key=parents.get(key)){
+  const [x,z]=key.split(',').map(Number);
+  result.push(new THREE.Vector3(mazeCoord(x),0,mazeCoord(z)));
+ }
+ return result.reverse();
+}
+const navChoices=mazeCells.filter(([x,z])=>navWalkable(Math.round(x/TILE+MID),Math.round(z/TILE+MID)));
 function randomDestination(id){
- const [x,z]=mazeCells[Math.floor(Math.random()*mazeCells.length)];roaming[id].target.set(x,0,z);
+ const nav=roaming[id],dog=dogs[id];
+ for(let i=0;i<35;i++){
+  const [x,z]=navChoices[Math.floor(Math.random()*navChoices.length)];
+  const route=findMazeRoute(dog.actor.position,new THREE.Vector3(x,0,z));
+  if(route.length>1){nav.target.set(x,0,z);nav.route=route;nav.stuck=0;return}
+ }
+ nav.route=[];nav.stop=.65;
 }
 randomDestination('busya');randomDestination('pryanik');
 function controlledDog(){return dogs[controlled]}
@@ -916,50 +960,38 @@ function animate(){
    walkDog(player,moving,dt,playerSpeed*mag);
    let npcMoving=false;
    if(aiEnabled&&npc.loaded&&player.loaded){
-     const nav=roaming[npc.id];
-     nav.reactCooldown=Math.max(0,nav.reactCooldown-dt);
-     const separation=npc.actor.position.distanceTo(player.actor.position);
-     // First real dog-to-dog interaction. A short look, then a distinct response.
-     // Pryanik is timid and trots away; Busya is curious and approaches.
-     if(separation<1.55&&nav.reactCooldown===0&&nav.reacting===0){
-       nav.reacting=1;nav.stop=.6;nav.reactCooldown=4.5;
-       encounterText=npc.id==='pryanik'?'🐶 Пряник заметил Бусю!':'🐻 Буся заметил Пряника!';
+    const nav=roaming[npc.id];nav.reactCooldown=Math.max(0,nav.reactCooldown-dt);
+    const separation=npc.actor.position.distanceTo(player.actor.position);
+    if(separation<1.55&&nav.reactCooldown===0&&nav.reacting===0){
+     nav.reacting=1;nav.stop=.6;nav.reactCooldown=5;
+     encounterText=npc.id==='pryanik'?'🐶 Пряник заметил Бусю!':'🐻 Буся заметил Пряника!';
+    }
+    if(nav.reacting===1){
+     const diff=player.actor.position.clone().sub(npc.actor.position);
+     const facing=Math.atan2(-diff.x,-diff.z),delta=Math.atan2(Math.sin(facing-npc.actor.rotation.y),Math.cos(facing-npc.actor.rotation.y));
+     npc.actor.rotation.y+=delta*(1-Math.exp(-dt*7));
+     nav.stop=Math.max(0,nav.stop-dt);
+     if(nav.stop===0){nav.reacting=0;nav.stop=.4;randomDestination(npc.id);encounterText=''}
+    }else if(nav.stop>0){nav.stop=Math.max(0,nav.stop-dt)}
+    else{
+     if(!nav.route.length)randomDestination(npc.id);
+     if(nav.route.length){
+      const waypoint=nav.route[0],diff=waypoint.clone().sub(npc.actor.position);diff.y=0;
+      const distance=diff.length();
+      if(distance<.22){
+       nav.route.shift();
+       if(!nav.route.length){nav.stop=.5+Math.random();randomDestination(npc.id)}
+      }else{
+       const speed=(npc.id==='busya'?1.42:.85)*1.15;
+       const oldX=npc.actor.position.x,oldZ=npc.actor.position.z;
+       diff.normalize();moveActor(npc,diff.x,diff.z,Math.min(distance,dt*speed),dt);
+       const moved=Math.hypot(npc.actor.position.x-oldX,npc.actor.position.z-oldZ);
+       npcMoving=moved>.0005;
+       nav.stuck=moved<.0005?nav.stuck+dt:0;
+       if(nav.stuck>.6){randomDestination(npc.id);nav.stop=.2}
+      }
      }
-     if(nav.reacting===1){
-       // Face player while looking; only rotate root, never change skeleton.
-       const toward=player.actor.position.clone().sub(npc.actor.position);
-       const heading=Math.atan2(-toward.x,-toward.z),delta=Math.atan2(Math.sin(heading-npc.actor.rotation.y),Math.cos(heading-npc.actor.rotation.y));
-       npc.actor.rotation.y+=delta*(1-Math.exp(-dt*7));
-       nav.stop=Math.max(0,nav.stop-dt);
-       if(nav.stop===0){nav.reacting=2;nav.stop=npc.id==='pryanik'?1.2:1.0}
-     }else if(nav.reacting===2){
-       nav.stop=Math.max(0,nav.stop-dt);
-       const away=npc.actor.position.clone().sub(player.actor.position);away.y=0;
-       let speed;
-       if(npc.id==='pryanik'){
-         speed=1.18*1.15;
-         if(away.lengthSq()<.01)away.set(1,0,0);
-         away.normalize();
-       }else{
-         speed=.85*1.15;
-         if(separation<.9){nav.stop=0;away.set(0,0,0)}
-         else away.normalize().negate();
-       }
-       if(away.lengthSq()>.01){moveActor(npc,away.x,away.z,dt*speed,dt);npcMoving=true}
-       if(nav.stop===0){nav.reacting=0;randomDestination(npc.id);nav.stop=1.0;encounterText=''}
-     }else{
-       if(nav.stop>0)nav.stop=Math.max(0,nav.stop-dt);
-       else{
-         const diff=nav.target.clone().sub(npc.actor.position);diff.y=0;
-         const distance=diff.length();
-         if(distance<.28){nav.stop=.8+Math.random()*2.0;randomDestination(npc.id)}
-         else{
-           const speed=(npc.id==='busya'?1.42:.85)*1.15;
-           const step=Math.min(distance,dt*speed);
-           diff.normalize();moveActor(npc,diff.x,diff.z,step,dt);npcMoving=true;
-         }
-       }
-     }
+    }
    }
    walkDog(npc,npcMoving,dt,(npc.id==='busya'?1.42:.85)*1.15);
    if(collectTimer>0)collectTimer=Math.max(0,collectTimer-dt);
