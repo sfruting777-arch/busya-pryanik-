@@ -55,10 +55,14 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 #hedge-test-panel button{width:100%;min-height:42px;height:auto;font-size:12px;padding:8px;background:#325b43ed;border-radius:12px}
 #hedge-test-panel a{font-size:11px;color:#fff2bc;text-shadow:0 1px 3px #234;touch-action:manipulation}
 #hedge-test-status{font-size:10px;color:#fff;text-shadow:0 1px 3px #234;pointer-events:none}
+
+/* Live FPS: lightweight readout, outside the minimap and joystick. */
+#fps-meter{position:fixed;z-index:10;right:62px;top:calc(max(12px,env(safe-area-inset-top)) + 174px);padding:5px 9px;border:1px solid #ffe0a2b0;border-radius:9px;background:#254439dd;color:#b8f7b9;font:700 12px/1.1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.3px;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 2px #152f23}
+#fps-meter.mid{color:#ffe58c}#fps-meter.low{color:#ff9e91}
 </style></head>
 <body>
 <div id="heading"><h1>🐻 Буся и Пряник 🐶 · Сад · тест изгороди 1</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
-<div id="message"></div>
+<div id="message"></div><div id="fps-meter" aria-label="Частота кадров">FPS: --</div>
 <div id="load-panel" hidden><div id="load-title">🐾 Загружаем героев…</div>
 <div class="loading-line"><label>🐻 Буся</label><progress id="load-busya" value="0" max="100"></progress><span id="percent-busya">0%</span></div>
 <div class="loading-line"><label>🐶 Пряник 2.0</label><progress id="load-new" value="0" max="100"></progress><span id="percent-new">0%</span></div>
@@ -1239,8 +1243,18 @@ el('cam-minus').onclick=()=>setCameraZoom(cameraZoom+.15);
 el('cam-reset').onclick=()=>setCameraZoom(1.28);
 setCameraZoom(1.28);
 cam.position.set(pryanik.actor.position.x,5.5,pryanik.actor.position.z+8);cam.lookAt(pryanik.actor.position);
+// Measure actual animation-frame delivery, including stalls. Sample every ~0.8 s.
+const fpsMeter=el('fps-meter');let fpsStart=performance.now(),fpsFrames=0;
 function animate(){
- requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);
+ requestAnimationFrame(animate);
+ const fpsNow=performance.now();fpsFrames++;
+ if(fpsNow-fpsStart>=800){
+  const fps=Math.round(fpsFrames*1000/(fpsNow-fpsStart));
+  fpsMeter.textContent='FPS: '+fps;
+  fpsMeter.className=fps<40?'low':fps<55?'mid':'';
+  fpsFrames=0;fpsStart=fpsNow;
+ }
+ const dt=Math.min(clock.getDelta(),.05);
  const player=controlledDog(),npc=roamingDog();
  if(!paused){
    const mag=Math.min(1,Math.hypot(jx,jy)),moving=mag>.12;
