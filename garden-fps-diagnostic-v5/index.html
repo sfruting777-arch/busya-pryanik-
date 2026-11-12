@@ -1,0 +1,1390 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Тест FPS v3 · Буся и Пряник — v43.2 садовый лабиринт · аккуратная листва</title>
+<style>
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:#b2dce0;color:#fff;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-user-select:none;user-select:none}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+#heading{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;text-align:center;text-shadow:0 2px 6px #223b32}
+h1{font-size:16px;color:#fff3be;margin:0 0 3px}#status{font-size:11px;font-weight:650}#position{font-size:11px;opacity:.85;margin-top:2px}
+#joy{position:fixed;z-index:6;left:12px;bottom:calc(16px + env(safe-area-inset-bottom));height:112px;width:112px;border:2px solid #ffe6b1;border-radius:50%;background:#344e3c9c;display:grid;place-items:center;touch-action:none}
+#stick{width:52px;height:52px;border:2px solid #fff0bc;border-radius:50%;background:#b18b50;display:grid;place-items:center;font-size:24px;pointer-events:none}
+#controls button{touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#bark{background:#946437e8;font-size:14px;font-weight:800;border-color:#ffdc97}#bark:active{background:#c98c45;transform:scale(.94)}
+#controls{position:fixed;z-index:6;right:8px;top:32%;display:flex;flex-direction:column;align-items:center;gap:7px;width:45px}
+button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#665140cf;font-size:22px;font-weight:700;padding:0;width:44px;height:44px;display:grid;place-items:center;touch-action:manipulation;box-shadow:0 2px 5px #27352844}
+#model-switch{position:fixed;z-index:7;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 123px);width:auto;min-width:155px;padding:0 10px;font-size:13px;background:#4d725bcf;border-radius:10px}#sweater-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 357px);display:flex;gap:6px}#sweater-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0}#tail-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 310px);display:flex;gap:7px}#tail-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#head-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 264px);display:flex;gap:6px;align-items:center}#head-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#head-tools input{width:86px;accent-color:#ffe0a2}#gait-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 216px);display:flex;gap:7px}#gait-tools button{height:40px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#rotate-tools{position:fixed;z-index:8;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 174px);display:flex;gap:7px}#rotate-tools button{height:39px;width:auto;padding:0 10px;font-size:12px;background:#345e57f0;border-radius:10px}#legend{display:none}
+#message{position:fixed;z-index:5;top:90px;left:16px;right:16px;text-align:center;pointer-events:none;color:#fff;font-size:13px;text-shadow:0 2px 5px #284536}#score{position:fixed;z-index:5;top:calc(max(12px,env(safe-area-inset-top)) + 79px);left:12px;background:#3c5745c9;border:1px solid #ffe8b6;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;pointer-events:none}
+
+/* Mobile-first: hide ALL experimental switches while watching the animation. */
+#settings-toggle{position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 113px);left:24px;z-index:11;width:34px;height:34px;padding:0;border-radius:7px;font-size:17px;background:#2d665ae8;transform:rotate(45deg);display:grid;place-items:center}
+#settings-toggle span{display:block;transform:rotate(-45deg);pointer-events:none}
+#status{background:#244f47b5;padding:3px 10px;border-radius:10px;display:inline-block}
+#load-panel{position:fixed;z-index:9;top:calc(max(12px,env(safe-area-inset-top)) + 64px);left:50%;transform:translateX(-50%);width:min(78vw,275px);padding:7px 11px;border:1px solid #ffe0a2;border-radius:12px;background:#254439ed;text-align:left;font-size:11px;box-shadow:0 3px 14px #173c3555}
+#load-panel[hidden]{display:none!important}
+#load-title{text-align:center;font-weight:700;margin-bottom:5px}
+.loading-line{display:flex;align-items:center;gap:6px;margin:3px 0}
+.loading-line label{min-width:78px}
+.loading-line progress{flex:1;height:8px;min-width:45px;accent-color:#e9b960}
+.loading-line span{width:30px;text-align:right;font-variant-numeric:tabular-nums}
+#debug-drawer[hidden]{display:none!important}
+#debug-drawer{position:fixed;z-index:12;top:calc(max(12px,env(safe-area-inset-top)) + 156px);left:10px;right:64px;max-height:min(430px,63dvh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:flex;flex-direction:column;gap:9px;padding:12px;border-radius:15px;background:#263d38eb;border:1px solid #ffe0a2;box-shadow:0 8px 32px #123a3855}
+#debug-drawer .drawer-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
+#debug-drawer .drawer-title button{width:30px;height:30px;flex:none;font-size:15px}
+#debug-drawer #model-switch,#debug-drawer #rotate-tools,#debug-drawer #gait-tools,#debug-drawer #head-tools,#debug-drawer #tail-tools,#debug-drawer #sweater-tools{position:static!important;z-index:auto!important;left:auto!important;top:auto!important;display:flex;flex-wrap:wrap;width:100%;min-width:0}
+#debug-drawer #model-switch{height:40px;justify-content:center}
+#debug-drawer #rotate-tools button,#debug-drawer #gait-tools button,#debug-drawer #head-tools button,#debug-drawer #tail-tools button,#debug-drawer #sweater-tools button{height:37px;max-width:100%;white-space:normal}
+#debug-drawer #head-tools{flex-wrap:nowrap;gap:5px}
+#debug-drawer #head-tools input{width:55px;flex:1;min-width:40px;touch-action:pan-x}
+#debug-drawer #head-tools span{min-width:25px}
+#debug-drawer #pace-tools{position:static!important;display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;min-width:0}
+#debug-drawer #pace-preset{height:38px;min-width:170px;padding:0 12px;background:#3f7467f0}
+#debug-drawer #pace-note{font-size:11px;color:#ffe0a2;opacity:.9}
+
+#debug-drawer #camera-zoom-tools{position:static!important;display:flex;gap:8px;align-items:center;justify-content:space-between;width:100%;min-width:0;padding:4px 0}
+#debug-drawer #camera-zoom-tools button{position:static!important;width:50px;min-width:45px;height:43px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;background:#3f7467f0;font-size:23px}
+#debug-drawer #camera-zoom-tools #cam-reset{font-size:19px;width:42px;min-width:38px}
+#debug-drawer #cam-zoom-label{flex:1;text-align:center;font-size:13px;white-space:nowrap}
+
+#heading h1{font-size:14px}
+#status[hidden]{display:none!important}
+#fp-hint{position:fixed;z-index:5;left:50%;top:calc(max(12px,env(safe-area-inset-top)) + 115px);transform:translateX(-50%);max-width:230px;text-align:center;border-radius:11px;padding:7px 10px;font-size:11px;background:#264c40be;pointer-events:none}#fp-hint[hidden]{display:none!important}
+#minimap{position:fixed;z-index:5;left:auto;bottom:auto;right:60px;top:calc(max(12px,env(safe-area-inset-top)) + 70px);width:94px;height:94px;padding:4px;border:1px solid #ffe0a2;border-radius:10px;background:#335b43d5;pointer-events:none}
+#message{top:calc(max(12px,env(safe-area-inset-top)) + 91px);font-size:11px}
+
+#hedge-test-panel{position:fixed;z-index:10;left:138px;right:66px;bottom:calc(18px + env(safe-area-inset-bottom));width:auto;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+#hedge-test-panel button{width:100%;min-height:42px;height:auto;font-size:12px;padding:8px;background:#325b43ed;border-radius:12px}
+#hedge-test-panel a{font-size:11px;color:#fff2bc;text-shadow:0 1px 3px #234;touch-action:manipulation}
+#hedge-test-status{font-size:10px;color:#fff;text-shadow:0 1px 3px #234;pointer-events:none}
+
+/* Live FPS: lightweight readout, outside the minimap and joystick. */
+#fps-meter{position:fixed;z-index:10;right:62px;top:calc(max(12px,env(safe-area-inset-top)) + 174px);padding:5px 9px;border:1px solid #ffe0a2b0;border-radius:9px;background:#254439dd;color:#b8f7b9;font:700 12px/1.1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.3px;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 2px #152f23}
+#fps-meter.mid{color:#ffe58c}#fps-meter.low{color:#ff9e91}
+
+#quality-toggle{position:fixed;z-index:11;right:62px;top:calc(max(12px,env(safe-area-inset-top)) + 207px);width:auto;height:32px;min-width:114px;padding:3px 8px;border-radius:9px;border:1px solid #ffe0a2a8;background:#325b43e8;color:#fff;font-size:11px;font-weight:750;display:flex;justify-content:center;align-items:center;touch-action:manipulation}
+#hedge-diagnostic{position:fixed;z-index:11;right:62px;top:calc(max(12px,env(safe-area-inset-top)) + 247px);width:auto;min-width:114px;height:32px;padding:3px 8px;font-size:11px;border-radius:9px;background:#325b43e8;border:1px solid #ffe0a2a8;display:flex;align-items:center;justify-content:center}
+#flower-density{position:fixed;z-index:11;right:62px;top:calc(max(12px,env(safe-area-inset-top)) + 287px);width:auto;min-width:114px;height:32px;padding:3px 8px;font-size:11px;border-radius:9px;background:#325b43e8;border:1px solid #ffe0a2a8;display:flex;align-items:center;justify-content:center}
+</style></head>
+<body>
+<div id="heading"><h1>🐻 Буся и Пряник 🐶 · Сад · тест FPS v5</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
+<div id="message"></div><div id="fps-meter" aria-label="Частота кадров">FPS: --</div><button id="quality-toggle" type="button" aria-label="Переключить разрешение графики">Экран: 1.6×</button><button id="hedge-diagnostic" type="button" aria-label="Временно скрыть все стены для диагностики">Стены: вкл.</button><button id="flower-density" type="button" aria-label="Доля цветочных стен">Цветы: 100%</button>
+<div id="load-panel" hidden><div id="load-title">🐾 Загружаем героев…</div>
+<div class="loading-line"><label>🐻 Буся</label><progress id="load-busya" value="0" max="100"></progress><span id="percent-busya">0%</span></div>
+<div class="loading-line"><label>🐶 Пряник 2.0</label><progress id="load-new" value="0" max="100"></progress><span id="percent-new">0%</span></div>
+</div>
+<button id="settings-toggle" aria-controls="debug-drawer" aria-expanded="false" aria-label="Настройки" title="Настройки" type="button"><span>⚙</span></button>
+<div id="debug-drawer" hidden>
+  <div class="drawer-title">🐶 Настройки Пряника <button id="settings-close" type="button" aria-label="Закрыть настройки">✕</button></div>
+  <button id="model-switch" disabled>✨ Пряник 2.0 · утверждён</button><div id="rotate-tools"><button id="turn180" type="button">↩ Повернуть 180°</button><button id="turn90" type="button">↻ 90°</button></div><div id="gait-tools"><button id="gait" type="button">🐾 Походка v20 · новая</button></div><div id="pace-tools"><button id="pace-preset" type="button">🐾 Темп лап · 2,0×</button><span id="pace-note">Утверждённый темп · +67%</span></div><div id="head-tools"><button id="head-toggle" type="button">🐶 Голова · живая</button><input id="head-yaw" type="range" min="-12" max="12" value="12" step="2" aria-label="Выпрямление головы"><span id="head-degree" style="font-size:11px">12°</span></div><div id="tail-tools"><button id="tail-toggle" type="button">🦊 Хвост · виляет</button><button id="tail-strength" type="button">⚡ Активно</button></div><div id="sweater-tools"><button id="sweater-toggle" type="button">🧶 Надпись · ярче</button></div><div id="camera-zoom-tools"><button id="cam-plus" type="button" aria-label="Приблизить камеру">＋</button><span id="cam-zoom-label">Камера 78%</span><button id="cam-minus" type="button" aria-label="Отдалить камеру">−</button><button id="cam-reset" type="button">↺</button></div>
+</div>
+<div id="score">🥫 Monge: 0 / 24</div><div id="fp-hint" hidden>👀 Глазами собаки · проведи по экрану для обзора</div><canvas id="minimap" width="184" height="184"></canvas>
+<div id="hedge-test-panel"><span id="hedge-test-status" role="status">Загрузка изгороди…</span><button id="hedge-compare" disabled aria-pressed="true">🌿 Новая изгородь</button><a href="../garden-hedge-test-v1/model.html">Рассмотреть образец ↗</a></div>
+<div id="joy"><div id="stick">🐾</div></div>
+<div id="controls"><button id="swap" title="Поменять собаку" aria-label="Поменять собаку">🎮</button><button id="view" title="Вид глазами собаки" aria-label="Вид глазами собаки">👁️</button><button id="ai" title="Второй гуляет или стоит" aria-label="Второй гуляет или стоит">🐾</button><button id="bark" type="button" title="Настоящий лай Пряника" aria-label="Пряник: гавкнуть">ГАВ!</button><button id="reset" title="Вернуть собак" aria-label="Вернуть собак">↺</button><button id="pause" title="Пауза" aria-label="Пауза">⏸</button><div id="legend">Буся v26: плечи 80% · подъём 75% · скорость +15%<br>Пряник v5: шаги 2,8× · свитер исправлен<br>Переключай управление и камеру для осмотра со стороны</div></div>
+<script src="../garden-assets/pryanik-bark-click.js"></script>
+<script src="../garden-assets/busya-voice-click.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const el=id=>document.getElementById(id);
+// Short real bark taken from the user's original Voice Memos recording.
+// Playback on a direct user tap to satisfy iOS Safari's gesture requirement.
+// v39: single bark button plays the actual recorded voice of the selected dog.
+// Audio is preembedded as tiny local assets, compatible with iOS user-gesture playback.
+const characterAudio={busya:null,pryanik:null};let lastBarkAt=-Infinity;
+el('bark').onclick=()=>{
+ const now=performance.now();if(now-lastBarkAt<850)return;
+ lastBarkAt=now;
+ const who=typeof controlled==='string'?controlled:'pryanik';
+ const src=who==='busya'?window.BUSYA_BARK_AUDIO:window.PRYANIK_BARK_AUDIO;
+ if(!src){el('message').textContent='Голос героя не загрузился — обнови страницу';return}
+ try{
+  for(const key of ['busya','pryanik']){
+   const audio=characterAudio[key];if(audio&&key!==who){audio.pause();audio.currentTime=0}
+  }
+  let audio=characterAudio[who];
+  if(!audio){audio=characterAudio[who]=new Audio(src);audio.preload='auto';audio.volume=who==='busya'?.93:.9}
+  else{audio.pause();audio.currentTime=0}
+  const promise=audio.play();
+  if(promise&&promise.catch)promise.catch(e=>{
+   console.warn('Voice playback blocked',e);
+   el('message').textContent='Включи звук на iPhone 🔊';
+  });
+ }catch(e){console.warn('Voice playback error',e);el('message').textContent='Не удалось воспроизвести голос'}
+};
+const settingsDrawer=el('debug-drawer'),settingsButton=el('settings-toggle');
+function showSettings(open){settingsDrawer.hidden=!open;settingsButton.setAttribute('aria-expanded',String(open));settingsButton.querySelector('span').textContent=open?'✕':'⚙'}
+settingsButton.onclick=()=>showSettings(settingsDrawer.hidden);
+el('settings-close').onclick=()=>showSettings(false);
+
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xadd7e5);scene.fog=new THREE.Fog(0xadd7e5,34,85);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+const highPixelRatio=Math.min(devicePixelRatio||1,1.6);let activePixelRatio=highPixelRatio;
+renderer.setPixelRatio(activePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const qualityButton=document.getElementById('quality-toggle');
+function setQuality(low){
+ activePixelRatio=low?1:highPixelRatio;
+ renderer.setPixelRatio(activePixelRatio);
+ renderer.setSize(innerWidth,innerHeight);
+ qualityButton.textContent='Экран: '+activePixelRatio.toFixed(1)+'×';
+ qualityButton.dataset.low=String(low);
+}
+qualityButton.addEventListener('click',()=>setQuality(qualityButton.dataset.low!=='true'));
+setQuality(false);
+const cam=new THREE.PerspectiveCamera(53,innerWidth/innerHeight,.05,65);
+scene.add(new THREE.HemisphereLight(0xffffff,0x71904d,2.15));
+const sun=new THREE.DirectionalLight(0xffe5b9,1.75);sun.position.set(-7,12,6);scene.add(sun);
+const mat=c=>new THREE.MeshLambertMaterial({color:c});
+// Small procedural textures: warm stone, soft grass and stylized individual leaves.
+function makeGardenTexture(kind){
+ const c=document.createElement('canvas');c.width=512;c.height=512;const ctx=c.getContext('2d');
+ let seed=kind==='foliage'?24681357:kind==='path'?13579246:987654;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ if(kind==='foliage'){
+  ctx.fillStyle='#568247';ctx.fillRect(0,0,512,512);
+  for(let i=0;i<850;i++){
+   const x=rand()*512,y=rand()*512,r=4+rand()*12;
+   ctx.save();ctx.translate(x,y);ctx.rotate(rand()*Math.PI*2);
+   ctx.fillStyle=['#345e37','#477742','#608e47','#779d54','#4c7b3b','#90ac59'][Math.floor(rand()*6)];
+   ctx.beginPath();ctx.ellipse(0,0,r*.75,r*.31,0,0,Math.PI*2);ctx.fill();
+   if(i%3===0){ctx.strokeStyle='rgba(215,230,155,.24)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.55,0);ctx.lineTo(r*.55,0);ctx.stroke()}
+   ctx.restore();
+  }
+ }else if(kind==='path'){
+  ctx.fillStyle='#ddcaa9';ctx.fillRect(0,0,512,512);
+  for(let i=0;i<1750;i++){
+   const x=rand()*512,y=rand()*512,r=1+rand()*5;
+   ctx.fillStyle=rand()<.5?'rgba(121,100,74,.11)':'rgba(255,245,215,.19)';
+   ctx.beginPath();ctx.ellipse(x,y,r*1.4,r,rand()*6.283,0,6.283);ctx.fill();
+  }
+  ctx.lineWidth=3;ctx.strokeStyle='rgba(112,96,77,.16)';
+  for(let row=0;row<4;row++){
+   const y=row*128;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(512,y);ctx.stroke();
+   for(let col=0;col<4;col++){
+    const x=col*128+(row%2?64:0);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+128);ctx.stroke();
+   }
+  }
+ }else{
+  ctx.fillStyle='#769b5c';ctx.fillRect(0,0,512,512);
+  for(let i=0;i<1800;i++){
+   const x=rand()*512,y=rand()*512;
+   ctx.strokeStyle=rand()<.5?'rgba(42,100,48,.18)':'rgba(181,207,119,.19)';
+   ctx.lineWidth=.7+rand();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*3-1.5,y-2-rand()*6);ctx.stroke();
+  }
+ }
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+ tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
+ tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+ tex.repeat.set(kind==='path'?9:kind==='grass'?10:1,kind==='path'?9:kind==='grass'?10:1);
+ return tex;
+}
+const grass=new THREE.MeshLambertMaterial({map:makeGardenTexture('grass'),color:0xf3f7e9});
+const pathMat=new THREE.MeshLambertMaterial({map:makeGardenTexture('path'),color:0xfff8ec});
+const hedgeTexture=makeGardenTexture('foliage');
+const hedgeMat=new THREE.MeshLambertMaterial({map:hedgeTexture,color:0xe0f0d6});
+const hedgeTopMat=new THREE.MeshLambertMaterial({map:hedgeTexture,color:0xe7f6d9});
+const wood=mat(0x8b674a),leaves=mat(0x4d8352),pink=mat(0xeaa7b3);
+
+/* v27 geometric prototype: procedurally generated, lightweight, mobile friendly */
+const MAZE_N=23,TILE=1.7,MID=11,maze=Array.from({length:23},()=>Array(23).fill(1));
+let seed=20261111;const randomMaze=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+const stack=[[1,1]];maze[1][1]=0;
+while(stack.length){
+ const [x,z]=stack[stack.length-1];
+ const opts=[[2,0],[-2,0],[0,2],[0,-2]].filter(([dx,dz])=>x+dx>0&&x+dx<22&&z+dz>0&&z+dz<22&&maze[z+dz][x+dx]);
+ if(!opts.length){stack.pop();continue}
+ const [dx,dz]=opts[Math.floor(randomMaze()*opts.length)];
+ maze[z+dz/2][x+dx/2]=0;maze[z+dz][x+dx]=0;stack.push([x+dx,z+dz]);
+}
+// More loops = more escape routes (Pac-Man style).
+for(let z=2;z<21;z++)for(let x=2;x<21;x++)if(maze[z][x]&&randomMaze()<.14&&((!maze[z][x-1]&&!maze[z][x+1])||(!maze[z-1][x]&&!maze[z+1][x])))maze[z][x]=0;
+// Central symmetrical open plaza with four approaches.
+for(let z=9;z<=13;z++)for(let x=9;x<=13;x++)maze[z][x]=0;
+for(const [x,z] of [[11,8],[11,14],[8,11],[14,11],[11,7],[11,15],[7,11],[15,11],[1,21],[2,21],[3,21]])maze[z][x]=0;
+const spawnBusya=[1,21],spawnPryanik=[3,21];
+const mazeCoord=i=>(i-MID)*TILE;
+const mazeCells=[];
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),grass);ground.rotation.x=-Math.PI/2;ground.position.y=-.03;scene.add(ground);
+const path=new THREE.Mesh(new THREE.PlaneGeometry(23*TILE,23*TILE),pathMat);path.rotation.x=-Math.PI/2;path.position.y=.008;scene.add(path);
+const positions=[];for(let z=0;z<23;z++)for(let x=0;x<23;x++){
+ if(maze[z][x])positions.push([mazeCoord(x),mazeCoord(z)]);
+ else mazeCells.push([mazeCoord(x),mazeCoord(z)]);
+}
+// v43.2: clean hedge walls. Removed protruding sphere/icosahedron clumps
+// from both sides and upper edges. Foliage is a flat detailed texture close
+// to the surface, so first-person camera has unobstructed visibility.
+const hedgeGeo=new THREE.BoxGeometry(TILE+.01,.85,TILE+.01);
+const hedgeTopGeo=new THREE.BoxGeometry(TILE+.02,.25,TILE+.02);
+const hedge=new THREE.InstancedMesh(hedgeGeo,hedgeMat,positions.length);
+const tops=new THREE.InstancedMesh(hedgeTopGeo,hedgeTopMat,positions.length);
+function leafCanvasTexture(){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');ctx.clearRect(0,0,256,256);
+ let state=6712;const rnd=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296};
+ for(let b=0;b<7;b++){
+  const x=18+b*36+(rnd()-.5)*15,y=115+rnd()*80,length=90+rnd()*66;
+  ctx.save();ctx.translate(x,y);ctx.rotate((rnd()-.5)*.7);
+  ctx.strokeStyle='#456e36';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,15);ctx.quadraticCurveTo(-6,-length*.5,3,-length);ctx.stroke();
+  for(let j=0;j<8;j++){
+   const h=12+j*length/9,side=j%2?-1:1;
+   ctx.save();ctx.translate(side*(10+rnd()*11),-h);ctx.rotate(side*.35);
+   ctx.fillStyle=['#427239','#558743','#76a05a','#618f48','#83aa5b'][Math.floor(rnd()*5)];
+   ctx.beginPath();ctx.ellipse(0,0,9+rnd()*8,4+rnd()*3,0,0,Math.PI*2);ctx.fill();
+   ctx.restore();
+  }
+  ctx.restore();
+ }
+ const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;
+ t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return t;
+}
+const FACE_COUNT=4;
+const hedgeLeafCards=new THREE.InstancedMesh(new THREE.PlaneGeometry(1.51,1.06),
+ new THREE.MeshLambertMaterial({map:leafCanvasTexture(),side:THREE.DoubleSide,alphaTest:.22,depthWrite:true,color:0xe4f4cf}),
+ positions.length*FACE_COUNT);
+const leafCardData=[],leafCardDummy=new THREE.Object3D();
+const faceSpecs=[[0,.874,0,1,0],[0,-.874,0,-1,0],[.874,0,1,0,Math.PI/2],[-.874,0,-1,0,Math.PI/2]];
+const dmy=new THREE.Object3D(),hedgeData=[];
+positions.forEach(([x,z],i)=>{
+ dmy.position.set(x,.425,z);dmy.scale.set(1,1,1);dmy.updateMatrix();
+ hedge.setMatrixAt(i,dmy.matrix);hedgeData.push([x,z]);
+ dmy.position.set(x,.96,z);
+ dmy.scale.set(1,.85+randomMaze()*.25,1);
+ dmy.updateMatrix();tops.setMatrixAt(i,dmy.matrix);
+ hedge.setColorAt(i,new THREE.Color().setHSL(.32,.24,.49+randomMaze()*.055));
+ tops.setColorAt(i,new THREE.Color().setHSL(.29,.27,.62+randomMaze()*.06));
+ const ix=Math.round(x/TILE+MID),iz=Math.round(z/TILE+MID);
+ for(let f=0;f<FACE_COUNT;f++){
+  const [ox,oz,nx,nz,rot]=faceSpecs[f],k=i*FACE_COUNT+f;
+  const exposed=ix+nx>=0&&ix+nx<23&&iz+nz>=0&&iz+nz<23&&!maze[iz+nz][ix+nx];
+  const elevation=.53+(randomMaze()-.5)*.035,scale=.94+randomMaze()*.10;
+  leafCardData[k]=[ox,oz,rot,elevation,scale,exposed];
+  leafCardDummy.position.set(x+ox,exposed?elevation:-20,z+oz);
+  leafCardDummy.rotation.set(0,rot,0);leafCardDummy.scale.setScalar(exposed?scale:.001);
+  leafCardDummy.updateMatrix();hedgeLeafCards.setMatrixAt(k,leafCardDummy.matrix);
+ }
+});
+hedge.instanceMatrix.needsUpdate=true;tops.instanceMatrix.needsUpdate=true;
+hedgeLeafCards.instanceMatrix.needsUpdate=true;hedgeLeafCards.frustumCulled=false;
+scene.add(hedge,tops,hedgeLeafCards);
+const hedgeHidden=new Set(),visibilityDummy=new THREE.Object3D();
+function revealPlayerBehindHedges(cameraPos,playerPos){
+ const dx=playerPos.x-cameraPos.x,dz=playerPos.z-cameraPos.z,l2=dx*dx+dz*dz;
+ let modified=false;
+ hedgeData.forEach(([x,z],i)=>{
+  const t=l2>0.01?((x-cameraPos.x)*dx+(z-cameraPos.z)*dz)/l2:0;
+  const distance=Math.hypot(x-cameraPos.x-t*dx,z-cameraPos.z-t*dz);
+  const hidden=t>.12&&t<.97&&distance<1.08;
+  if(hidden===hedgeHidden.has(i))return;
+  modified=true;
+  if(hidden)hedgeHidden.add(i);else hedgeHidden.delete(i);
+  visibilityDummy.position.set(x,hidden?.08:.425,z);
+  visibilityDummy.scale.set(1,hidden?.18:1,1);visibilityDummy.updateMatrix();
+  hedge.setMatrixAt(i,visibilityDummy.matrix);
+  visibilityDummy.position.set(x,hidden?.08:.96,z);
+  visibilityDummy.scale.set(1,hidden?.01:1,1);visibilityDummy.updateMatrix();
+  tops.setMatrixAt(i,visibilityDummy.matrix);
+  for(let f=0;f<FACE_COUNT;f++){
+   const k=i*FACE_COUNT+f,[ox,oz,rot,y,size,exposed]=leafCardData[k];
+   const show=!hidden&&exposed;
+   leafCardDummy.position.set(x+ox,show?y:-20,z+oz);
+   leafCardDummy.rotation.set(0,rot,0);
+   leafCardDummy.scale.setScalar(show?size:.001);leafCardDummy.updateMatrix();
+   hedgeLeafCards.setMatrixAt(k,leafCardDummy.matrix);
+  }
+ });
+ if(modified){
+  hedge.instanceMatrix.needsUpdate=true;tops.instanceMatrix.needsUpdate=true;
+  hedgeLeafCards.instanceMatrix.needsUpdate=true;
+ }
+ return modified;
+}
+
+// Full-garden visual test: replace all walk-facing hedge wall cells with instanced pawprint hedge blocks.
+// The maze grid, collision logic, characters, food and camera stay unchanged.
+let sampleHedge=null,sampleEnabled=true,diagnosticNoHedges=false;
+const densityLevels=[1,.5,.25,0];let densityStep=0;
+const flowerDensityButton=el('flower-density');
+// Deterministic interleaving spreads the decorative cells across the entire maze.
+const sampleIndices=positions.map(([x,z],i)=>({i,x,z})).sort((a,b)=>((Math.imul(a.i+1,2654435761)>>>0)-(Math.imul(b.i+1,2654435761)>>>0)));
+const sampleOriginals=sampleIndices.map(({i})=>{
+ const body=new THREE.Matrix4(),top=new THREE.Matrix4();hedge.getMatrixAt(i,body);tops.getMatrixAt(i,top);
+ const cards=Array.from({length:FACE_COUNT},(_,f)=>{const m=new THREE.Matrix4();hedgeLeafCards.getMatrixAt(i*FACE_COUNT+f,m);return m});
+ return {body,top,cards};
+});
+const sampleDummy=new THREE.Object3D(),sampleZero=new THREE.Matrix4().makeScale(0,0,0);
+function updateSampleHedges(){
+ if(!sampleHedge)return;
+ const activeCount=sampleEnabled?Math.round(sampleIndices.length*densityLevels[densityStep]):0;
+ sampleHedge.count=activeCount;
+ sampleHedge.visible=sampleEnabled&&!diagnosticNoHedges&&activeCount>0;
+ for(let k=0;k<sampleIndices.length;k++){
+  const {i,x,z}=sampleIndices[k],hidden=hedgeHidden.has(i),o=sampleOriginals[k];
+  if(sampleEnabled&&k<activeCount){
+   hedge.setMatrixAt(i,sampleZero);tops.setMatrixAt(i,sampleZero);
+   for(let f=0;f<FACE_COUNT;f++)hedgeLeafCards.setMatrixAt(i*FACE_COUNT+f,sampleZero);
+   sampleDummy.position.set(x,hidden?.02:.015,z);sampleDummy.rotation.set(0,(k%4)*Math.PI/2,0);
+   sampleDummy.scale.set(1,hidden?.10:1,1);sampleDummy.updateMatrix();sampleHedge.setMatrixAt(k,sampleDummy.matrix);
+  }else if(!hidden){
+   hedge.setMatrixAt(i,o.body);tops.setMatrixAt(i,o.top);
+   for(let f=0;f<FACE_COUNT;f++)hedgeLeafCards.setMatrixAt(i*FACE_COUNT+f,o.cards[f]);
+  }else{
+   sampleDummy.position.set(x,.08,z);sampleDummy.rotation.set(0,0,0);sampleDummy.scale.set(1,.18,1);sampleDummy.updateMatrix();hedge.setMatrixAt(i,sampleDummy.matrix);
+   sampleDummy.scale.set(1,.01,1);sampleDummy.updateMatrix();tops.setMatrixAt(i,sampleDummy.matrix);
+   for(let f=0;f<FACE_COUNT;f++)hedgeLeafCards.setMatrixAt(i*FACE_COUNT+f,sampleZero);
+  }
+ }
+ for(const mesh of [hedge,tops,hedgeLeafCards,sampleHedge])mesh.instanceMatrix.needsUpdate=true;
+}
+new GLTFLoader().load('../garden-assets/pawprint-hedge-fixed-v1.glb',g=>{
+ try{
+  let source=null;g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh&&!source)source=o});
+  if(!source)throw Error('Нет геометрии');
+  const geometry=source.geometry.clone();geometry.applyMatrix4(source.matrixWorld);geometry.computeBoundingBox();
+  const box=geometry.boundingBox,size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  geometry.translate(-center.x,-box.min.y,-center.z);geometry.scale(1.71/size.x,1.08/size.y,1.71/size.z);geometry.computeBoundingSphere();
+  const material=source.material.clone();material.color.multiply(new THREE.Color(.85,.95,.85));
+  if(material.map)material.map.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+  sampleHedge=new THREE.InstancedMesh(geometry,material,sampleIndices.length);sampleHedge.frustumCulled=true;sampleHedge.name='Pawprint_hedge_test';scene.add(sampleHedge);
+  updateSampleHedges();applyHedgeDiagnostic();el('hedge-compare').disabled=false;el('hedge-test-status').textContent='Все секции изгороди';
+  document.body.dataset.hedgeReady='true';document.body.dataset.hedgeTriangles=String(geometry.index?geometry.index.count/3:geometry.attributes.position.count/3);
+ }catch(e){el('hedge-test-status').textContent='Не удалось подготовить изгородь';console.error(e)}
+},undefined,e=>{el('hedge-test-status').textContent='Изгородь не загрузилась · обнови страницу';console.error(e)});
+const hedgeDiagnosticButton=el('hedge-diagnostic');
+function applyHedgeDiagnostic(){
+ hedge.visible=!diagnosticNoHedges;
+ tops.visible=!diagnosticNoHedges;
+ hedgeLeafCards.visible=!diagnosticNoHedges;
+ if(sampleHedge)sampleHedge.visible=!diagnosticNoHedges&&sampleEnabled&&sampleHedge.count>0;
+ hedgeDiagnosticButton.textContent=diagnosticNoHedges?'Стены: выкл.':'Стены: вкл.';
+}
+hedgeDiagnosticButton.onclick=()=>{diagnosticNoHedges=!diagnosticNoHedges;applyHedgeDiagnostic()};
+flowerDensityButton.onclick=()=>{densityStep=(densityStep+1)%densityLevels.length;flowerDensityButton.textContent='Цветы: '+Math.round(100*densityLevels[densityStep])+'%';updateSampleHedges();applyHedgeDiagnostic()};
+el('hedge-compare').onclick=()=>{
+ sampleEnabled=!sampleEnabled;updateSampleHedges();
+ el('hedge-compare').textContent=sampleEnabled?'🌿 Новая изгородь':'🌱 Прежняя изгородь';
+ el('hedge-compare').setAttribute('aria-pressed',String(sampleEnabled));
+};
+
+function mazeClear(x,z,r=.28){
+ for(const [dx,dz] of [[-r,-r],[-r,r],[r,-r],[r,r],[0,0]]){
+  const ix=Math.floor((x+dx)/TILE+MID+.5),iz=Math.floor((z+dz)/TILE+MID+.5);
+  if(ix<0||ix>=23||iz<0||iz>=23||maze[iz][ix])return false;
+ }
+ if(Math.hypot(x,z)<1.42+r)return false;
+ return true;
+}
+const stone=mat(0xc7b7a0),waterMat=new THREE.MeshStandardMaterial({color:0x64bfd7,metalness:.12,roughness:.23});
+const plaza=new THREE.Mesh(new THREE.CylinderGeometry(4.5,4.5,.06,48),mat(0xd5bd9d));plaza.position.y=.04;scene.add(plaza);
+const basin=new THREE.Mesh(new THREE.CylinderGeometry(1.39,1.48,.37,32),stone);basin.position.y=.20;scene.add(basin);
+const water=new THREE.Mesh(new THREE.CylinderGeometry(1.26,1.26,.016,32),waterMat);water.position.y=.39;scene.add(water);
+const fountainColumn=new THREE.Mesh(new THREE.CylinderGeometry(.18,.32,.62,16),stone);fountainColumn.position.y=.71;scene.add(fountainColumn);
+// v42: ground-level planted flowerbeds, NOT bowls with coloured balls.
+// Four elongated stone-edged beds on the plaza diagonals, off main walking routes.
+// Everything below uses GPU instancing: no heavy GLB or per-flower draw calls.
+const bedPoints=[[2.62,2.62],[-2.62,2.62],[2.62,-2.62],[-2.62,-2.62]];
+const bedCount=bedPoints.length,plantsPerBed=12,petalsPerFlower=5;
+const bedBody=new THREE.Object3D();
+const bedSoil=new THREE.InstancedMesh(
+ new THREE.CylinderGeometry(1,1,.055,24),
+ new THREE.MeshLambertMaterial({color:0x55452e}),bedCount);
+const bedRims=new THREE.InstancedMesh(
+ new THREE.TorusGeometry(1,.085,5,28),
+ new THREE.MeshLambertMaterial({color:0xc4b18d}),bedCount);
+const stemMesh=new THREE.InstancedMesh(
+ new THREE.CylinderGeometry(.014,.018,1,5),
+ new THREE.MeshLambertMaterial({color:0x467a35}),bedCount*plantsPerBed);
+const leafMesh=new THREE.InstancedMesh(
+ new THREE.SphereGeometry(1,6,4),
+ new THREE.MeshLambertMaterial({color:0xffffff,flatShading:false}),bedCount*plantsPerBed*2);
+const petalMesh=new THREE.InstancedMesh(
+ new THREE.SphereGeometry(1,7,5),
+ new THREE.MeshLambertMaterial({color:0xffffff,side:THREE.DoubleSide}),
+ bedCount*plantsPerBed*petalsPerFlower);
+const flowerCenters=new THREE.InstancedMesh(
+ new THREE.SphereGeometry(.035,7,5),
+ new THREE.MeshLambertMaterial({color:0xf0bf43}),
+ bedCount*plantsPerBed);
+const flowerPalette=['#ef94a8','#f4b5c8','#fff2da','#d7a6e6','#edbd78','#f5d5e6'].map(c=>new THREE.Color(c));
+const leafPalette=['#437738','#62964a','#7a9d52'].map(c=>new THREE.Color(c));
+for(let i=0;i<bedCount;i++){
+ const [x,z]=bedPoints[i];
+ // An oval inset into the stone floor: no tall pot or cone-shaped ice cream dish.
+ bedBody.position.set(x,.101,z);bedBody.rotation.set(0,0,0);
+ bedBody.scale.set(.62,1,.39);bedBody.updateMatrix();bedSoil.setMatrixAt(i,bedBody.matrix);
+ bedBody.position.set(x,.132,z);bedBody.rotation.set(Math.PI/2,0,0);
+ bedBody.scale.set(.63,.40,1);bedBody.updateMatrix();bedRims.setMatrixAt(i,bedBody.matrix);
+ for(let j=0;j<plantsPerBed;j++){
+  const index=i*plantsPerBed+j;
+  const a=j*2.39996+randomMaze()*.36;
+  const dist=.07+Math.sqrt(randomMaze())*.27;
+  const fx=x+Math.cos(a)*dist*1.43, fz=z+Math.sin(a)*dist*.94;
+  const height=.20+randomMaze()*.19;
+  const tipY=.16+height;
+  // Thin individual green stem.
+  bedBody.position.set(fx,.16+height*.5,fz);
+  bedBody.rotation.set(0,0,0);bedBody.scale.set(1,height,1);
+  bedBody.updateMatrix();stemMesh.setMatrixAt(index,bedBody.matrix);
+  // Two recognizable pointed-ish leaves attached to every stem.
+  for(let k=0;k<2;k++){
+   const leafIndex=index*2+k,theta=a+k*Math.PI+.5;
+   bedBody.position.set(fx+Math.cos(theta)*.055,.16+height*(.3+k*.17),fz+Math.sin(theta)*.055);
+   bedBody.rotation.set(0,theta,-.25+k*.35);
+   bedBody.scale.set(.090,.022,.036);
+   bedBody.updateMatrix();leafMesh.setMatrixAt(leafIndex,bedBody.matrix);
+   leafMesh.setColorAt(leafIndex,leafPalette[(i+j+k)%leafPalette.length]);
+  }
+  const flowerColor=flowerPalette[(i*3+j)%flowerPalette.length];
+  // Five upright petals form a clear flower, with a separate yellow center.
+  for(let p=0;p<petalsPerFlower;p++){
+   const ang=p*Math.PI*2/petalsPerFlower+randomMaze()*.12;
+   const pi=index*petalsPerFlower+p;
+   bedBody.position.set(fx+Math.sin(ang)*.051,tipY+.015,fz+Math.cos(ang)*.051);
+   bedBody.rotation.set(0,ang,Math.PI*.16);
+   bedBody.scale.set(.044,.071,.024);
+   bedBody.updateMatrix();petalMesh.setMatrixAt(pi,bedBody.matrix);
+   petalMesh.setColorAt(pi,flowerColor);
+  }
+  bedBody.position.set(fx,tipY+.015,fz);bedBody.rotation.set(0,0,0);
+  bedBody.scale.setScalar(1);bedBody.updateMatrix();
+  flowerCenters.setMatrixAt(index,bedBody.matrix);
+ }
+}
+for(const mesh of [bedSoil,bedRims,stemMesh,leafMesh,petalMesh,flowerCenters]){
+ mesh.instanceMatrix.needsUpdate=true;
+ if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ mesh.frustumCulled=false;scene.add(mesh);
+}
+// Portrait is fully hidden by a non-transparent curtain; no real family image is loaded.
+const frame=new THREE.Group();frame.position.set(0,0,-3.05);scene.add(frame);
+const gold=new THREE.MeshStandardMaterial({color:0xbfa361,metalness:.2,roughness:.5});
+const velvet=new THREE.MeshLambertMaterial({color:0x6d2b47,side:THREE.DoubleSide});
+for(const [x,y,w,h] of [[0,1.99,2.1,.14],[0,.84,2.1,.14],[-1.04,1.42,.14,1.25],[1.04,1.42,.14,1.25]]){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,.15),gold);m.position.set(x,y,0);frame.add(m);
+}
+const covered=new THREE.Mesh(new THREE.PlaneGeometry(1.96,1.06),velvet);covered.position.set(0,1.43,.1);frame.add(covered);
+for(let i=0;i<20;i++){
+ const angle=i*2.4,rad=23.5+i%4*2.4,x=Math.cos(angle)*rad,z=Math.sin(angle)*rad;
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.14,.2,1.6,6),wood);trunk.position.set(x,.8,z);scene.add(trunk);
+ const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.0+(i%3)*.13,0),leaves);crown.position.set(x,2.05,z);scene.add(crown);
+}
+for(let i=0;i<22;i++){
+ const angle=i*2.6,rad=3.4+i%4*.19,x=Math.cos(angle)*rad,z=Math.sin(angle)*rad;
+ if(z<-1.5&&Math.abs(x)<1.3)continue;
+ const flower=new THREE.Mesh(new THREE.IcosahedronGeometry(.115,0),pink);flower.position.set(x,.18,z);scene.add(flower);
+}
+// First collectible: a small stylized Monge tin with a readable texture.
+// The real Meshy Monge GLB is loaded below; keep collection effects independent.
+const pickup=new THREE.Group();
+const mongeHolder=new THREE.Group();mongeHolder.name='FoodHolder';pickup.add(mongeHolder);
+const tinModel=new THREE.Group(),bagModel=new THREE.Group();mongeHolder.add(tinModel,bagModel);
+let tinReady=false,bagReady=false;
+// Rotate a tilted, centered tray around the world vertical axis.
+mongeHolder.position.y=.46;
+mongeHolder.rotation.order='YXZ';
+mongeHolder.rotation.x=1.13;
+const loadingToken=new THREE.Mesh(new THREE.BoxGeometry(.45,.12,.45),
+  new THREE.MeshStandardMaterial({color:0xbebfc1,metalness:.65,roughness:.35}));
+loadingToken.position.y=.15;tinModel.add(loadingToken);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(.43,.023,8,36),new THREE.MeshBasicMaterial({color:0xffe08c}));ring.rotation.x=Math.PI/2;ring.position.y=.025;pickup.add(ring);
+const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=128;
+const ctx=glowCanvas.getContext('2d'),rad=ctx.createRadialGradient(64,64,3,64,64,64);
+rad.addColorStop(0,'rgba(255,244,163,.9)');rad.addColorStop(.35,'rgba(255,204,70,.48)');rad.addColorStop(1,'rgba(255,180,50,0)');
+ctx.fillStyle=rad;ctx.fillRect(0,0,128,128);
+const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(glowCanvas),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.65}));
+glow.position.y=.22;glow.scale.set(1.5,1.5,1);pickup.add(glow);
+const halo=new THREE.Mesh(new THREE.TorusGeometry(.43,.03,6,40),new THREE.MeshBasicMaterial({color:0xffd96c,transparent:true,opacity:.85,depthWrite:false}));
+halo.rotation.x=Math.PI/2;halo.position.y=.06;halo.material.opacity=.53;pickup.add(halo);
+const sparks=[];
+for(let i=0;i<7;i++){
+ const sp=new THREE.Mesh(new THREE.SphereGeometry(.025,6,6),new THREE.MeshBasicMaterial({color:i%2?0xfff3b2:0xffbf57,depthWrite:false}));
+ pickup.add(sp);sparks.push(sp);
+}
+scene.add(pickup);
+const flash=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8),new THREE.MeshBasicMaterial({color:0xffed99,transparent:true,opacity:0,depthWrite:false}));
+scene.add(flash);let flashTimer=0;
+let collected=0,collectTimer=0;
+const foodPositions=[],foodTaken=new Set(),foodObjects=[];
+const accessible=[],visited=new Set(),queue=[[1,21]];
+visited.add('1,21');
+for(let k=0;k<queue.length;k++){
+ const [x,z]=queue[k];accessible.push([x,z]);
+ for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+  const xx=x+dx,zz=z+dz,key=xx+','+zz;
+  if(xx>0&&xx<22&&zz>0&&zz<22&&!maze[zz][xx]&&!visited.has(key)){visited.add(key);queue.push([xx,zz])}
+ }
+}
+const foodCandidates=accessible.filter(([x,z])=>(Math.abs(x-11)>3||Math.abs(z-11)>3)&&!(x<=4&&z>=20))
+ .sort((a,b)=>Math.atan2(a[1]-11,a[0]-11)-Math.atan2(b[1]-11,b[0]-11));
+const FOOD_TOTAL=24;
+for(let i=0;i<FOOD_TOTAL;i++){
+ const [ix,iz]=foodCandidates[Math.min(foodCandidates.length-1,Math.floor((i+.5)*foodCandidates.length/FOOD_TOTAL))];
+ foodPositions.push({id:i,ix,iz,x:mazeCoord(ix),z:mazeCoord(iz)});
+}
+function buildFood(){
+ for(const g of foodObjects)scene.remove(g);
+ foodObjects.length=0;
+ for(const p of foodPositions){
+  const g=pickup.clone(true);g.position.set(p.x,0,p.z);
+  const holder=g.children.find(obj=>obj.name==='FoodHolder')||g.children[0];
+  const isBusya=controlled==='busya';
+  // The source Monge meshes and textures are reused, not regenerated.
+  if(holder){
+   holder.children.forEach((child,i)=>child.visible=isBusya?i===1:i===0);
+   holder.scale.setScalar(.85); // v31: +25% size for readability
+  }
+  g.userData.id=p.id;g.visible=!foodTaken.has(p.id);
+  scene.add(g);foodObjects.push(g);
+ }
+ pickup.visible=false;
+}
+function updateFoodScore(){
+ el('score').textContent=(controlled==='busya'?'🐶 Сухой Monge: ':'🥫 Паштет Monge: ')+collected+' / '+FOOD_TOTAL;
+}
+function checkPickup(dog){
+ if(!dog.loaded||collectTimer>0)return;
+ for(const g of foodObjects){
+  if(!g.visible||Math.hypot(g.position.x-dog.actor.position.x,g.position.z-dog.actor.position.z)>.70)continue;
+  g.visible=false;foodTaken.add(g.userData.id);collected++;collectTimer=.12;
+  flash.position.set(g.position.x,.45,g.position.z);flashTimer=.42;
+  updateFoodScore();
+  if(collected===FOOD_TOTAL)el('message').textContent='🌟 Все упаковки собраны! Финальный сюрприз добавим после оформления сада.';
+  break;
+ }
+}
+// Build collectibles after the selected dog and controls are initialized.
+// End collectible test.
+// Both dogs are rooted in the same world-space metric frame.
+const dogs={};
+function createDog(id,x,z,label,color){
+ const actor=new THREE.Group();actor.position.set(x,0,z);scene.add(actor);
+ const holder=new THREE.Group();actor.add(holder);
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(.40,24),new THREE.MeshBasicMaterial({color:0x293722,opacity:.25,transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(x,.033,z);scene.add(shadow);
+ return dogs[id]={id,actor,holder,shadow,loaded:false,mixer:null,walk:null,idle:null,moving:false};
+}
+const busya=createDog('busya',mazeCoord(1),mazeCoord(21),'Буся','#98682c');
+const pryanik=createDog('pryanik',mazeCoord(3),mazeCoord(21),'Пряник','#b66738');
+const loader=new GLTFLoader();
+// Cached GLB assets: persist across visits on the same iPhone/browser where Cache Storage is available.
+const modelLoadState={
+ busya:{progress:0,ready:false,failed:false,cache:false},
+ new:{progress:0,ready:false,failed:false,cache:false}
+};
+const modelKind=url=>url.includes('busya-world-v1/')?'busya':url.includes('Pryanik_2_rig_walk_UPLOAD.glb')?'new':null;
+const modelLabels={busya:'Буся',new:'Пряник 2.0'};
+let hideLoadStatusScheduled=false;
+function displayModelLoading(){
+ const keys=['busya','new'];
+ const finished=keys.every(k=>modelLoadState[k].ready||modelLoadState[k].failed);
+ el('load-panel').hidden=finished;
+ for(const k of keys){
+  const v=modelLoadState[k],pct=Math.min(100,Math.floor(v.progress));
+  el('load-'+k).value=pct;
+  el('percent-'+k).textContent=v.failed?'⚠️':pct+'%';
+ }
+ if(!finished){
+  const current=keys.filter(k=>!modelLoadState[k].ready&&!modelLoadState[k].failed);
+  el('load-title').textContent='🐾 Загрузка · '+current.map(k=>modelLabels[k]).join(', ');
+ }else{
+  const cached=keys.filter(k=>modelLoadState[k].cache).length;
+  el('status').textContent='🐾 Герои загружены'+(cached?' · '+cached+'/2 из кэша':'');
+  if(!hideLoadStatusScheduled){
+   hideLoadStatusScheduled=true;
+   setTimeout(()=>{if(busya.loaded&&pryanik.loaded)el('status').hidden=true},2500);
+  }
+ }
+}
+function reportModelProgress(kind,value,cached=false){
+ if(!kind)return;
+ const st=modelLoadState[kind];
+ st.progress=Math.max(st.progress,Math.min(100,value));
+ if(cached)st.cache=true;
+ displayModelLoading();
+}
+const realLoad=loader.load.bind(loader);
+loader.load=(url,onLoad,onProgress,onError)=>{
+ const kind=modelKind(url);
+ if(kind){el('load-panel').hidden=false;displayModelLoading()}
+ (async()=>{
+  const absolute=new URL(url,location.href).href;
+  let cache=null,response=null,fromCache=false;
+  try{
+   if('caches' in window){
+    try{cache=await caches.open('busya-pryanik-glb-cache-v1');response=await cache.match(absolute);fromCache=!!response}catch(e){cache=null}
+   }
+   if(!response){
+    response=await fetch(absolute,{mode:'cors'});
+    if(!response.ok)throw Error('HTTP '+response.status);
+   }
+   const total=Number(response.headers.get('content-length'))||0;
+   const chunks=[];let loaded=0,buffer;
+   if(response.body&&response.body.getReader){
+    const reader=response.body.getReader();
+    while(true){
+     const {done,value}=await reader.read();if(done)break;
+     chunks.push(value);loaded+=value.byteLength;
+     if(kind&&total)reportModelProgress(kind,Math.min(96,loaded/total*96),fromCache);
+    }
+    const bytes=new Uint8Array(loaded);let offset=0;
+    for(const c of chunks){bytes.set(c,offset);offset+=c.byteLength}
+    buffer=bytes.buffer;
+   }else buffer=await response.arrayBuffer();
+   if(kind)reportModelProgress(kind,97,fromCache);
+   await new Promise((resolve,reject)=>loader.parse(buffer,new URL('.',absolute).href,model=>{
+    try{onLoad?.(model);resolve()}catch(e){reject(e)}
+   },reject));
+   if(kind){modelLoadState[kind].ready=true;reportModelProgress(kind,100,fromCache)}
+   if(!fromCache&&cache){try{await cache.put(absolute,new Response(buffer.slice(0),{headers:{'Content-Type':'model/gltf-binary'}}))}catch(e){console.warn('Asset cache skipped:',e)}}
+  }catch(error){
+   if(kind){modelLoadState[kind].failed=true;displayModelLoading()}
+   if(onError)onError(error);else console.warn('GLB load error',absolute,error);
+  }
+ })();
+ return {abort(){}};
+};
+// v14: Rescue only the Monge aluminum shell. Keep the original printed lid.
+function restoreMongeSilver(model){
+ model.traverse(node=>{
+  if(!node.isMesh)return;
+  const originals=Array.isArray(node.material)?node.material:[node.material];
+  const restored=originals.map(original=>{
+   if(!original || !original.isMeshStandardMaterial)return original;
+   const silver=original.clone();
+   // Meshy metallic=1 needs an environment map, which this mobile scene lacks.
+   silver.metalness=.08;
+   silver.roughness=.55;
+   silver.metalnessMap=null;
+   silver.roughnessMap=null;
+   // Textured normal map contains the false colored spots and baked wrinkles.
+   silver.normalMap=null;
+   silver.bumpMap=null;
+   silver.onBeforeCompile=shader=>{
+    shader.vertexShader='varying vec3 vMongeLocalNormal;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace(
+      '#include <beginnormal_vertex>',
+      '#include <beginnormal_vertex>\n vMongeLocalNormal = normalize(normal);'
+    );
+    shader.fragmentShader='varying vec3 vMongeLocalNormal;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      '#include <map_fragment>\n float mongeSide = 1.0 - smoothstep(0.40, 0.84, abs(vMongeLocalNormal.z));\n diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.77,0.81,0.84), mongeSide);'
+    );
+   };
+   silver.customProgramCacheKey=()=> 'monge-silver-side-v14';
+   silver.needsUpdate=true;
+   return silver;
+  });
+  node.material=Array.isArray(node.material)?restored:restored[0];
+ });
+}
+const mongeURL='../Monge_final_20261110.glb';
+loader.load(mongeURL,g=>{
+ try{
+   const object=g.scene;
+   restoreMongeSilver(object);
+   object.updateMatrixWorld(true);
+   let bbox=new THREE.Box3().setFromObject(object);
+   const dimensions=bbox.getSize(new THREE.Vector3());
+   if(!Number.isFinite(dimensions.x)||Math.max(dimensions.x,dimensions.y,dimensions.z)<.001)
+     throw Error('Некорректные размеры Monge');
+   const scale=.63/Math.max(dimensions.x,dimensions.z);
+   object.scale.multiplyScalar(scale);
+   object.updateMatrixWorld(true);
+   bbox.setFromObject(object);
+   const center=bbox.getCenter(new THREE.Vector3());
+   // Center on the spinning pivot so the front and back are shown evenly.
+   object.position.set(-center.x,-center.y,-center.z);
+   tinModel.clear();tinModel.add(object);tinReady=true;refreshFood();buildFood();
+ }catch(e){el('message').textContent='Monge: ошибка 3D-модели — '+e.message}
+},undefined,e=>{el('message').textContent='Новая модель Monge пока не загружена: добавь Monge_final_20261110.glb в корень GitHub'});
+
+const bagURL='../Monge_Busya_dryfood_final.glb';
+loader.load(bagURL,g=>{
+ try {
+  const o=g.scene;
+  o.traverse(n=>{
+   if(!n.isMesh)return;
+   const old=Array.isArray(n.material)?n.material:[n.material];
+   const fixed=old.map(m=>{if(!m||!m.isMeshStandardMaterial)return m;
+    const c=m.clone();c.metalness=.05;c.metalnessMap=null;c.roughness=.8;c.roughnessMap=null;return c});
+   n.material=Array.isArray(n.material)?fixed:fixed[0];
+  });
+  o.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(o),size=bounds.getSize(new THREE.Vector3());
+  if(!Number.isFinite(size.y)||size.y<.001)throw Error('Размер пакета некорректен');
+  o.scale.multiplyScalar(.88/size.y);o.updateMatrixWorld(true);
+  const bb=new THREE.Box3().setFromObject(o),ctr=bb.getCenter(new THREE.Vector3());
+  o.position.set(-ctr.x,-ctr.y,-ctr.z);
+  bagModel.clear();bagModel.add(o);bagReady=true;refreshFood();buildFood();
+ }catch(e){el('message').textContent='Бусин Monge: '+e.message}
+},undefined,e=>{el('message').textContent='Добавь Monge_Busya_dryfood_final.glb в корень GitHub';});
+function refreshFood(){
+ const isBusya=controlled==='busya';
+ tinModel.visible=!isBusya;bagModel.visible=isBusya;
+ mongeHolder.rotation.x=isBusya?.12:1.13;
+ mongeHolder.position.y=isBusya?.58:.46;
+ updateFoodScore();
+ if(isBusya&&!bagReady)el('message').textContent='Добавь Monge_Busya_dryfood_final.glb в корень GitHub';
+ else if(el('message').textContent.includes('Monge_Busya_dryfood_final.glb'))el('message').textContent='';
+}
+
+function prepareBusya(g){
+ const dog=busya,model=g.scene;
+ model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+ if(size.y<.01)throw Error('Размер Буси некорректен');
+ model.scale.setScalar(1.18/size.y);model.updateMatrixWorld(true);bounds.setFromObject(model);
+ const mid=bounds.getCenter(new THREE.Vector3());model.position.set(-mid.x,-bounds.min.y+.0225,-mid.z);
+ dog.holder.add(model);dog.holder.rotation.y=-Math.PI/2;
+ const mixer=dog.mixer=new THREE.AnimationMixer(model),clips=g.animations;
+ const shoulderStrength=80,liftStrength=75;
+ const original=clips.find(a=>/walk/i.test(a.name))||clips[0];
+ let damped=0,modified=original?original.clone():null;
+ if(modified){
+   const pitchAxis=new THREE.Vector3(0,1,0);
+   const pitchQ=new THREE.Quaternion();
+   for(const track of modified.tracks){
+     const normalized=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+     const part=normalized.match(/0_(Right|Left)_Limb_([012])(?:_|$)/i);
+     if(!part||!track.name.endsWith('.quaternion'))continue;
+     const segment=Number(part[2]),isLeft=part[1].toLowerCase()==='left';
+     const values=track.values,n=values.length/4;if(n<2)continue;
+     // Preserve centre pose, suppress the imported side-flaring Z swing.
+     const centre=new THREE.Quaternion(),ref=new THREE.Quaternion().fromArray(values,0);
+     let sx=0,sy=0,sz=0,sw=0;
+     for(let k=0;k<n;k++){const q=new THREE.Quaternion().fromArray(values,k*4),sign=q.dot(ref)<0?-1:1;sx+=sign*q.x;sy+=sign*q.y;sz+=sign*q.z;sw+=sign*q.w}
+     centre.set(sx,sy,sz,sw).normalize();
+     const lateralReduction=[.72,.66,.50][segment];
+     const forwardSwing=[.19,.10,.045][segment];
+     for(let k=0;k<n;k++){
+       const q=new THREE.Quaternion().fromArray(values,k*4);
+       if(q.dot(centre)<0)q.set(-q.x,-q.y,-q.z,-q.w);
+       q.slerp(centre,lateralReduction);
+       // Alternate front feet; animate fore-aft motion around local Y, rather than sideways fan around local Z.
+       const phase=2*Math.PI*track.times[k]/Math.max(.001,modified.duration)+(isLeft?Math.PI:0);
+       const swing=forwardSwing*Math.sin(phase+(segment===1?.28:0));
+       pitchQ.setFromAxisAngle(pitchAxis,swing);
+       q.multiply(pitchQ).normalize().toArray(values,k*4);
+     }
+     damped++;
+   }
+ }
+ 
+ // Preserve the front stride and unchanged rear legs. Suppress shoulder flare only.
+ let shouldersAdjusted=0;
+ if(modified){
+  for(const track of modified.tracks){
+   const name=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+   if(!/0_(Right|Left)_Limb_0(?:_|$)/i.test(name)||!track.name.endsWith('.quaternion'))continue;
+   const vals=track.values,n=vals.length/4;
+   if(n<2)continue;
+   const ref=new THREE.Quaternion().fromArray(vals,0),centre=new THREE.Quaternion();
+   let sx=0,sy=0,sz=0,sw=0;
+   for(let i=0;i<n;i++){
+     const q=new THREE.Quaternion().fromArray(vals,i*4),sign=q.dot(ref)<0?-1:1;
+     sx+=sign*q.x;sy+=sign*q.y;sz+=sign*q.z;sw+=sign*q.w;
+   }
+   centre.set(sx,sy,sz,sw).normalize();
+   const inverse=centre.clone().invert();
+   const euler=new THREE.Euler(),d=new THREE.Quaternion();
+   for(let i=0;i<n;i++){
+     const q=new THREE.Quaternion().fromArray(vals,i*4);
+     if(q.dot(centre)<0)q.set(-q.x,-q.y,-q.z,-q.w);
+     d.copy(inverse).multiply(q).normalize();euler.setFromQuaternion(d,'XYZ');
+     euler.x*=1-.82*shoulderStrength/100;
+     euler.y*=1-.82*shoulderStrength/100;
+     d.setFromEuler(euler);
+     q.copy(centre).multiply(d).normalize().toArray(vals,i*4);
+   }
+   shouldersAdjusted++;
+  }
+ }
+ // Gentle fore-elbow bend during swing, modifying only front lower joints.
+ // Local axis and timing are experimental; lift=0 fully disables this stage.
+ let elbowTracks=0;
+ if(modified&&liftStrength>0){
+  const axis=new THREE.Vector3(1,0,0),bend=new THREE.Quaternion();
+  for(const track of modified.tracks){
+   const name=track.name.replace(/[^a-z0-9]/gi,'_').replace(/_+/g,'_');
+   const match=name.match(/0_(Right|Left)_Limb_1(?:_|$)/i);
+   if(!match||!track.name.endsWith('.quaternion'))continue;
+   const left=match[1].toLowerCase()==='left',vals=track.values;
+   for(let i=0;i<track.times.length;i++){
+    const phase=track.times[i]/Math.max(.01,modified.duration)*Math.PI*2+(left?Math.PI:0);
+    const lift=Math.pow(Math.max(0,Math.sin(phase)),1.5);
+    bend.setFromAxisAngle(axis,0.17*(liftStrength/100)*lift);
+    const q=new THREE.Quaternion().fromArray(vals,i*4);q.multiply(bend).normalize().toArray(vals,i*4);
+   }
+   elbowTracks++;
+  }
+ }
+
+ const w=modified||original, id=clips.find(a=>/idle/i.test(a.name))||clips[1];
+ dog.walk=w?mixer.clipAction(w):null;dog.idle=id?mixer.clipAction(id):null;
+ if(dog.idle)dog.idle.play();dog.loaded=true;
+}
+function preparePryanik(g){
+ const dog=pryanik,model=g.scene;
+ const repairs=[];
+model.traverse(o=>{
+ if(!o.isSkinnedMesh||o.name!=='char1')return;
+ const src=o.geometry,uv=src.attributes.uv,p=src.attributes.position,idx=src.index;
+ const faces=[];
+ const inside=k=>p.getX(k)<-.0015&&Math.pow((uv.getX(k)-.6145)/.017,2)+Math.pow((uv.getY(k)-.5895)/.015,2)<1;
+ for(let k=0;k<idx.count;k+=3){const a=idx.getX(k),b=idx.getX(k+1),c=idx.getX(k+2);if(inside(a)||inside(b)||inside(c))faces.push(a,b,c);}
+ const geo=src.clone();geo.setIndex(faces);
+ const clean=geo.attributes.uv;
+ for(let k=0;k<clean.count;k++)clean.setXY(k,clean.getX(k)+.020,clean.getY(k)+.018);
+ clean.needsUpdate=true;
+ const mat=o.material.clone();mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;mat.depthWrite=false;
+ const cover=new THREE.SkinnedMesh(geo,mat);cover.name='Sweater_clean_knit_patch';cover.renderOrder=1;
+ cover.position.copy(o.position);cover.quaternion.copy(o.quaternion);cover.scale.copy(o.scale);
+ cover.bindMode=o.bindMode;cover.bind(o.skeleton,o.bindMatrix);cover.frustumCulled=false;
+ repairs.push([o.parent,cover]);
+});
+repairs.forEach(([parent,cover])=>parent.add(cover));
+// Render lettering after the knit repair while retaining body occlusion.
+model.traverse(o=>{
+ if(!o.isMesh||!o.name.startsWith('PRYANIK_logo_'))return;
+ o.renderOrder=2;
+ o.material=o.material.clone();
+ o.material.polygonOffset=true;
+ o.material.polygonOffsetFactor=-4;
+ o.material.polygonOffsetUnits=-4;
+});
+
+
+
+ model.updateMatrixWorld(true);let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+ if(Math.max(size.x,size.y,size.z)<.01)throw Error('Размер Пряника некорректен');
+ model.scale.setScalar(.9765/Math.max(size.x,size.y,size.z));model.updateMatrixWorld(true);
+ const mixer=dog.mixer=new THREE.AnimationMixer(model),clips=g.animations;
+ const walkClip=clips.find(c=>c.name==='Pryanik_gentle_walk_v1')||clips.find(c=>/walk/i.test(c.name))||clips[1];
+ if(!walkClip)throw Error('Не найдена анимация Пряника');
+ dog.walk=mixer.clipAction(walkClip);dog.walk.play();mixer.update(0);
+ model.updateMatrixWorld(true);bounds.setFromObject(model);const mid=bounds.getCenter(new THREE.Vector3());
+ model.position.set(-mid.x,-bounds.min.y+.018,-mid.z);dog.holder.add(model);dog.holder.rotation.y=Math.PI;dog.loaded=true;originalPryanik={model,mixer,walk:dog.walk,idle:dog.idle};if(newPryanikModel)switchPryanik(true);
+}
+let failures=[];
+function refreshStatus(){
+ const count=Number(busya.loaded)+Number(pryanik.loaded);
+ if(!['busya','new'].every(k=>modelLoadState[k].ready||modelLoadState[k].failed))
+  el('status').textContent=count===0?'Загружаем двух артистов…':'Герои появляются · '+count+'/2';
+ else displayModelLoading();
+ if(failures.length)el('message').textContent=failures.join(' · ');
+}
+function loadDog(url,fn,name){loader.load(url,g=>{try{fn(g)}catch(e){failures.push(name+': '+e.message)}refreshStatus()},undefined,e=>{failures.push(name+': не загрузился GLB');refreshStatus()})}
+loadDog('../busya-world-v1/Busya_walk_idle_test_v1.glb?v=3',prepareBusya,'Буся');
+// v36: comparison Pryanik is not loaded.
+// v19: skeletal Pryanik 2.0 with exact v10 eye patch reconstructed at runtime.
+// Source GLB and all legacy versions remain unchanged.
+let newPryanikModel=null,newPryanikMixer=null,newPryanikWalk=null,oldPryanikWalk=null,improvedPryanikWalk=null,enhancedGait=true,usingNewPryanik=false,originalPryanik=null,pryanikYawDeg=0;
+const pryanikPaceModes=[
+ {rate:1.2,label:'🐾 Темп лап · 1,2×',note:'Оригинальный темп v23'},
+ {rate:1.6,label:'🐾 Темп лап · 1,6×',note:'На 33% быстрее'},
+ {rate:2.0,label:'🐾 Темп лап · 2,0×',note:'На 67% быстрее · сравни с 1.0'}
+];
+let pryanikPaceIndex=2; // approved by user: 2.0x
+function setPryanikPace(index){
+ pryanikPaceIndex=(index+pryanikPaceModes.length)%pryanikPaceModes.length;
+ const p=pryanikPaceModes[pryanikPaceIndex];
+ el('pace-preset').textContent=p.label;
+ el('pace-note').textContent=p.note;
+ if(newPryanikMixer&&usingNewPryanik)newPryanikMixer.timeScale=p.rate;
+}
+el('pace-preset').onclick=()=>setPryanikPace(pryanikPaceIndex+1);
+let pryanikHead=null,headMotion=true,headYawCorrection=THREE.MathUtils.degToRad(12),headTime=0;const headRest=new THREE.Quaternion(),headTilt=new THREE.Quaternion(),headTurn=new THREE.Quaternion(),headNod=new THREE.Quaternion();
+let pryanikTail=null,tailMotion=true,tailStrong=true,tailTime=0;const tailRest=new THREE.Quaternion(),tailSwing=new THREE.Quaternion(),tailBounce=new THREE.Quaternion();
+const newPryanikURL='https://raw.githubusercontent.com/sfruting777-arch/busya-pryanik-/main/Pryanik_2_rig_walk_UPLOAD.glb';
+function switchPryanik(){
+ if(!newPryanikModel)return;
+ usingNewPryanik=true;newPryanikModel.visible=true;
+ pryanik.mixer=newPryanikMixer;pryanik.walk=newPryanikWalk;pryanik.idle=null;pryanik.moving=false;
+ pryanik.holder.rotation.y=Math.PI;
+ if(pryanik.walk){pryanik.walk.reset().play();pryanik.mixer.update(0)}
+ el('model-switch').textContent='✨ Пряник 2.0 · утверждён';
+}
+// New 17-pose cycle on the EXISTING 8 leg bones; 1.2 second loop.
+// No changes to bone hierarchy, skin weights, dog meshes or source GLB.
+function createImprovedPryanikWalk(original){
+ const duration=1.2, count=17;
+ const times=[],angles={};
+ const upperNames=['front_left_upper','front_right_upper','hind_left_upper','hind_right_upper'];
+ const lowerNames=['front_left_lower','front_right_lower','hind_left_lower','hind_right_lower'];
+ for(const n of [...upperNames,...lowerNames])angles[n]=[];
+ // Diagonal pairs move together; swing is larger, knees bend most during airborne phase.
+ for(let k=0;k<count;k++){
+   const time=duration*k/(count-1),phase=2*Math.PI*k/(count-1);
+   times.push(time);
+   for(const n of upperNames){
+     const offset=(n==='front_left_upper'||n==='hind_right_upper')?0:Math.PI;
+     const swing=THREE.MathUtils.degToRad(19.5)*Math.sin(phase+offset);
+     const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),swing);
+     angles[n].push(q.x,q.y,q.z,q.w);
+   }
+   for(const n of lowerNames){
+     const offset=(n==='front_left_lower'||n==='hind_right_lower')?0:Math.PI;
+     // Flexion peaks during the swing-forward part rather than staying nearly fixed.
+     const lift=Math.max(0,Math.sin(phase+offset+Math.PI/6));
+     const flex=THREE.MathUtils.degToRad(5.7+20.3*lift*lift);
+     const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),flex);
+     angles[n].push(q.x,q.y,q.z,q.w);
+   }
+ }
+ const tracks=original.tracks.map(track=>{
+   const n=track.name.split('.')[0];
+   if(angles[n]&&track.name.endsWith('.quaternion'))
+     return new THREE.QuaternionKeyframeTrack(track.name,times,angles[n]);
+   return track.clone();
+ });
+ return new THREE.AnimationClip('Pryanik_v20_16_step_gait',duration,tracks);
+}
+function setGait(improved){
+ enhancedGait=improved;
+ el('gait').textContent=improved?'🐾 Походка v20 · новая':'🐾 Походка v19 · старая';
+ if(!newPryanikMixer||!oldPryanikWalk||!improvedPryanikWalk)return;
+ const target=improved?improvedPryanikWalk:oldPryanikWalk;
+ if(newPryanikWalk!==target){
+   newPryanikWalk.stop();
+   newPryanikWalk=target;
+   newPryanikWalk.reset().play();
+   if(usingNewPryanik){pryanik.walk=newPryanikWalk;pryanik.moving=false;}
+ }
+
+}
+el('gait').onclick=()=>setGait(!enhancedGait);
+el('tail-toggle').onclick=()=>{tailMotion=!tailMotion;el('tail-toggle').textContent=tailMotion?'🦊 Хвост · виляет':'🦊 Хвост · выкл.'};
+el('tail-strength').onclick=()=>{tailStrong=!tailStrong;el('tail-strength').textContent=tailStrong?'⚡ Активно':'🌿 Мягко'};
+function animatePryanikTail(dt){
+ if(!pryanikTail||!usingNewPryanik||paused)return;
+ tailTime+=dt;
+ const walking=pryanik.moving;
+ const amplitude=THREE.MathUtils.degToRad(tailStrong?(walking?25.2:15.6):(walking?13:7));
+ const frequency=walking?8:3.2;
+ // All offsets are reapplied to the rest pose each frame — no drift.
+ const swing=amplitude*Math.sin(tailTime*frequency);
+ const bounce=THREE.MathUtils.degToRad(tailStrong?6:3)*Math.sin(tailTime*frequency*1.5);
+ tailSwing.setFromAxisAngle(new THREE.Vector3(0,1,0),swing);
+ tailBounce.setFromAxisAngle(new THREE.Vector3(1,0,0),bounce);
+ pryanikTail.quaternion.copy(tailRest).multiply(tailSwing).multiply(tailBounce);
+}
+el('head-toggle').onclick=()=>{headMotion=!headMotion;el('head-toggle').textContent=headMotion?'🐶 Голова · живая':'🐶 Голова · неподвижна'};
+el('head-yaw').oninput=()=>{headYawCorrection=THREE.MathUtils.degToRad(Number(el('head-yaw').value));el('head-degree').textContent=el('head-yaw').value+'°'};
+function animatePryanikHead(dt){
+ if(!pryanikHead||!usingNewPryanik||paused)return;
+ headTime+=dt;
+ const moving=pryanik.moving;
+ const turn=headYawCorrection+(headMotion?(moving?.085*Math.sin(headTime*3.5):.065*Math.sin(headTime*1.3)):0);
+ const nod=headMotion?(moving?.035*Math.sin(headTime*12):.012*Math.sin(headTime*2.2)):0;
+ const roll=headMotion?(moving?.024*Math.sin(headTime*6):.014*Math.sin(headTime*1.7)):0;
+ headTurn.setFromAxisAngle(new THREE.Vector3(0,1,0),turn);
+ headNod.setFromAxisAngle(new THREE.Vector3(1,0,0),nod);
+ headTilt.setFromAxisAngle(new THREE.Vector3(0,0,1),roll);
+ pryanikHead.quaternion.copy(headRest).multiply(headTurn).multiply(headNod).multiply(headTilt);
+}
+// v24: reversible and LOCAL sweater color update. No geometry/text overlays.
+let sweaterEnhanced=true,sweaterMaterialStates=[];
+const printZones=[[975,1125,1140,1315],[1150,1215,1130,1230]];
+function createSweaterInkTexture(source){
+ const img=source.image;if(!img||!img.width||!img.height)return null;
+ const w=img.width,h=img.height,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
+ const image=ctx.getImageData(0,0,w,h),rgba=image.data;
+ let changed=0;
+ for(const [x1,x2,y1,y2] of printZones){
+  for(let y=Math.floor(y1*h/2048);y<=Math.ceil(y2*h/2048);y++){
+   if(y<0||y>=h)continue;
+   for(let x=Math.floor(x1*w/2048);x<=Math.ceil(x2*w/2048);x++){
+    if(x<0||x>=w)continue;
+    const i=4*(y*w+x),r=rgba[i],g=rgba[i+1],b=rgba[i+2];
+    // Printed chocolate brown; preserve off-white knit and orange fur.
+    if(r>65&&r<185&&g>35&&g<148&&b>12&&b<118&&r>g*1.08&&g>b*1.12&&(r+g+b)<395){
+     rgba[i]=Math.round(r*.77);rgba[i+1]=Math.round(g*.73);rgba[i+2]=Math.round(b*.72);changed++;
+    }
+   }
+  }
+ }
+ if(changed<20){console.warn('Sweater ink not detected');return null;}
+ ctx.putImageData(image,0,0);
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=source.colorSpace;map.flipY=source.flipY;
+ map.wrapS=source.wrapS;map.wrapT=source.wrapT;
+ map.magFilter=source.magFilter;map.minFilter=source.minFilter;
+ map.anisotropy=source.anisotropy;map.generateMipmaps=source.generateMipmaps;
+ map.offset.copy(source.offset);map.repeat.copy(source.repeat);map.center.copy(source.center);map.rotation=source.rotation;
+ return map;
+}
+function installSweaterContrast(root){
+ sweaterMaterialStates=[];
+ root.traverse(o=>{
+  if(!o.isSkinnedMesh&&!o.isMesh)return;
+  const mats=Array.isArray(o.material)?o.material:[o.material];
+  for(let k=0;k<mats.length;k++){
+   const m=mats[k];if(!m?.map)continue;
+   const improved=createSweaterInkTexture(m.map);if(!improved)continue;
+   const updated=m.clone();updated.map=improved;updated.needsUpdate=true;
+   sweaterMaterialStates.push({mesh:o,index:k,original:m,updated});
+   if(Array.isArray(o.material)){const a=[...o.material];a[k]=updated;o.material=a}
+   else o.material=updated;
+  }
+ });
+ return sweaterMaterialStates.length>0;
+}
+function toggleSweaterContrast(on){
+ sweaterEnhanced=on;
+ for(const it of sweaterMaterialStates){
+  const mat=on?it.updated:it.original;
+  if(Array.isArray(it.mesh.material)){const a=[...it.mesh.material];a[it.index]=mat;it.mesh.material=a;}
+  else it.mesh.material=mat;
+ }
+ el('sweater-toggle').textContent=on?'🧶 Надпись · ярче':'🧶 Надпись · оригинал';
+
+}
+el('sweater-toggle').onclick=()=>toggleSweaterContrast(!sweaterEnhanced);
+
+el('model-switch').textContent='⏳ Пряник 2.0 загружается…';
+loader.load(newPryanikURL,g=>{
+ try{
+  const model=g.scene;model.updateMatrixWorld(true);
+  try{if(!installSweaterContrast(model))el('message').textContent='Свитер: коррекция недоступна'}catch(e){console.warn('Sweater texture original preserved',e)}
+  let bbox=new THREE.Box3().setFromObject(model);
+  let dim=bbox.getSize(new THREE.Vector3()),maxDim=Math.max(dim.x,dim.y,dim.z);
+  if(!Number.isFinite(maxDim)||maxDim<.01)throw Error('Размер модели некорректен');
+  let head=null,tail=null;
+  model.traverse(o=>{if(o.isBone&&o.name==='head_neck')head=o;if(o.isBone&&o.name==='tail_base')tail=o;if(o.isSkinnedMesh)o.frustumCulled=false});
+  if(!head)throw Error('Не найдена кость головы head_neck');
+  pryanikHead=head;headRest.copy(head.quaternion);
+  pryanikTail=tail;if(tail)tailRest.copy(tail.quaternion);else el('tail-toggle').textContent='⚠️ Нет кости хвоста';
+  // Exact source: user's Pryanik_eye_patch_exact.json (size 30, depth -15).
+  const p=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),
+     new THREE.MeshStandardMaterial({color:0x1c0e0a,roughness:.22,metalness:0}));
+  p.name='Eye_patch_v10_exact';
+  p.position.set(-0.1601608578975958,0.23466952644632433,0.2638866190393544);
+  p.quaternion.set(0.01775691242443093,-0.21133920689478258,0,0.9772514679908315);
+  p.scale.set(0.0375,0.03,0.0195);
+  head.add(p);
+  model.scale.multiplyScalar(.9765/maxDim);model.updateMatrixWorld(true);bbox.setFromObject(model);
+  const mid=bbox.getCenter(new THREE.Vector3());
+  model.position.set(-mid.x,-bbox.min.y+.018,-mid.z);
+  model.rotation.y=0;model.visible=false;pryanik.holder.add(model);
+  const clip=g.animations.find(c=>/gentle_walk/i.test(c.name))||g.animations.find(c=>/walk/i.test(c.name))||g.animations[0];
+  if(!clip)throw Error('Нет анимации ходьбы');
+  newPryanikMixer=new THREE.AnimationMixer(model);
+  oldPryanikWalk=newPryanikMixer.clipAction(clip);oldPryanikWalk.play();
+  improvedPryanikWalk=newPryanikMixer.clipAction(createImprovedPryanikWalk(clip));
+  newPryanikWalk=oldPryanikWalk;
+  setGait(true);
+  newPryanikModel=model;
+  pryanik.loaded=true;switchPryanik();refreshStatus();
+ }catch(e){el('model-switch').textContent='⚠️ Ошибка модели';el('message').textContent=e.message}
+},undefined,e=>{el('model-switch').textContent='⚠️ Ошибка GLB';el('message').textContent=e?.message||'Ошибка загрузки'});
+// no comparison button in the main game
+function rotateNewPryanik(degrees){
+ if(!newPryanikModel)return;
+ if(!usingNewPryanik)switchPryanik(true);
+ pryanikYawDeg=(pryanikYawDeg+degrees)%360;
+ newPryanikModel.rotation.y=THREE.MathUtils.degToRad(pryanikYawDeg);
+
+}
+el('turn180').onclick=()=>rotateNewPryanik(180);
+el('turn90').onclick=()=>rotateNewPryanik(90);
+
+const joy=el('joy'),stick=el('stick');let jx=0,jy=0,activeTouch=null,pointerId=null;
+function moveStick(x,y){const r=joy.getBoundingClientRect();let dx=x-(r.left+r.width/2),dy=y-(r.top+r.height/2),d=Math.hypot(dx,dy),k=d>31?31/d:1;dx*=k;dy*=k;jx=dx/31;jy=dy/31;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
+function stopStick(){activeTouch=null;pointerId=null;jx=jy=0;stick.style.transform='translate(0px,0px)'}
+joy.addEventListener('touchstart',e=>{e.preventDefault();if(activeTouch!==null)return;const t=e.changedTouches[0];activeTouch=t.identifier;moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===activeTouch)moveStick(t.clientX,t.clientY)},{passive:false});
+joy.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===activeTouch)stopStick()},{passive:false});
+joy.addEventListener('touchcancel',stopStick,{passive:false});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;pointerId=e.pointerId;joy.setPointerCapture(e.pointerId);moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===pointerId)moveStick(e.clientX,e.clientY)});
+joy.addEventListener('pointerup',stopStick);joy.addEventListener('pointercancel',stopStick);
+let paused=false,aiEnabled=true,view=1,controlled='pryanik'; // view=2: first-person mode
+const roaming={
+ busya:{target:new THREE.Vector3(),route:[],stop:0,reactCooldown:0,reacting:0,stuck:0},
+ pryanik:{target:new THREE.Vector3(),route:[],stop:0,reactCooldown:0,reacting:0,stuck:0}
+};
+let encounterText='';
+const navKey=(x,z)=>x+','+z,navDirections=[[1,0],[-1,0],[0,1],[0,-1]];
+const navTile=p=>[Math.max(1,Math.min(21,Math.round(p.x/TILE+MID))),Math.max(1,Math.min(21,Math.round(p.z/TILE+MID)))];
+const navWalkable=(x,z)=>x>0&&x<22&&z>0&&z<22&&!maze[z][x]&&Math.hypot(mazeCoord(x),mazeCoord(z))>1.8;
+function navNearest(p){
+ const [x,z]=navTile(p);if(navWalkable(x,z))return[x,z];
+ let best=null,dist=Infinity;
+ for(let iz=1;iz<22;iz++)for(let ix=1;ix<22;ix++)if(navWalkable(ix,iz)){
+  const d=(ix-x)**2+(iz-z)**2;if(d<dist){dist=d;best=[ix,iz]}
+ }
+ return best;
+}
+// Breadth-first search is shortest-path on our equally weighted maze cells.
+function findMazeRoute(startPosition,goalPosition){
+ const startCell=navNearest(startPosition),goalCell=navNearest(goalPosition);
+ if(!startCell||!goalCell)return [];
+ const startKey=navKey(...startCell),endKey=navKey(...goalCell);
+ const queue=[startCell],parents=new Map([[startKey,null]]);
+ for(let i=0;i<queue.length;i++){
+  const [x,z]=queue[i],key=navKey(x,z);
+  if(key===endKey)break;
+  for(const [dx,dz] of navDirections){
+   const xx=x+dx,zz=z+dz,k=navKey(xx,zz);
+   if(!navWalkable(xx,zz)||parents.has(k))continue;
+   parents.set(k,key);queue.push([xx,zz]);
+  }
+ }
+ if(!parents.has(endKey))return [];
+ const result=[];
+ for(let key=endKey;key&&key!==startKey;key=parents.get(key)){
+  const [x,z]=key.split(',').map(Number);
+  result.push(new THREE.Vector3(mazeCoord(x),0,mazeCoord(z)));
+ }
+ return result.reverse();
+}
+const navChoices=mazeCells.filter(([x,z])=>navWalkable(Math.round(x/TILE+MID),Math.round(z/TILE+MID)));
+function randomDestination(id){
+ const nav=roaming[id],dog=dogs[id];
+ for(let i=0;i<35;i++){
+  const [x,z]=navChoices[Math.floor(Math.random()*navChoices.length)];
+  const route=findMazeRoute(dog.actor.position,new THREE.Vector3(x,0,z));
+  if(route.length>1){nav.target.set(x,0,z);nav.route=route;nav.stuck=0;return}
+ }
+ nav.route=[];nav.stop=.65;
+}
+randomDestination('busya');randomDestination('pryanik');
+function controlledDog(){return dogs[controlled]}
+function roamingDog(){return dogs[controlled==='busya'?'pryanik':'busya']}
+function updateLabels(){
+ const main=controlled==='busya'?'Бусей':'Пряником';
+ const other=controlled==='busya'?'Пряник':'Буся';
+ el('swap').textContent='🎮';el('swap').title='Управляю '+main+' — нажми, чтобы сменить';
+ el('ai').textContent=aiEnabled?'🐾':'🛑';el('ai').title=other+': '+(aiEnabled?'гуляет':'стоит');
+}
+el('swap').onclick=()=>{
+ controlled=controlled==='busya'?'pryanik':'busya';
+ // Keep the left thumb moving after switching dogs with the right thumb.
+ randomDestination(roamingDog().id);
+ if(view===2){fpYaw=controlledDog().actor.rotation.y;fpPitch=0}
+ roaming[roamingDog().id].stop=.6;
+ roaming[roamingDog().id].reactCooldown=1.5;encounterText='';
+ updateLabels();refreshFood();buildFood();
+};
+let fpYaw=0,fpPitch=0,fpPointer=null,fpX=0,fpY=0;
+function toggleDogEye(){
+ if(view===2){view=1;fpPointer=null;el('fp-hint').hidden=true}
+ else{view=2;fpYaw=controlledDog().actor.rotation.y;fpPitch=0;fpPointer=null;el('fp-hint').hidden=true}
+ el('view').textContent=view===2?'🐕':'👁️';
+ el('view').title=view===2?'Вернуться к обычной камере':'Вид глазами собаки';
+ el('view').setAttribute('aria-label',el('view').title);
+}
+el('view').onclick=toggleDogEye;
+const gameCanvas=renderer.domElement;
+gameCanvas.addEventListener('pointerdown',e=>{
+ if(view!==2||fpPointer!==null)return;
+ fpPointer=e.pointerId;fpX=e.clientX;fpY=e.clientY;
+ try{gameCanvas.setPointerCapture(e.pointerId)}catch(_){}
+});
+gameCanvas.addEventListener('pointermove',e=>{
+ if(view!==2||e.pointerId!==fpPointer)return;
+ const dx=e.clientX-fpX,dy=e.clientY-fpY;fpX=e.clientX;fpY=e.clientY;
+ fpYaw-=dx*.005;fpPitch=THREE.MathUtils.clamp(fpPitch-dy*.005,-1.35,1.35);
+});
+const stopLook=e=>{if(e.pointerId===fpPointer)fpPointer=null};
+gameCanvas.addEventListener('pointerup',stopLook);gameCanvas.addEventListener('pointercancel',stopLook);
+el('ai').onclick=()=>{aiEnabled=!aiEnabled;if(!aiEnabled){encounterText='';roaming[roamingDog().id].reacting=0}updateLabels()};
+el('pause').onclick=()=>{paused=!paused;el('pause').textContent=paused?'▶':'⏸';el('pause').title=paused?'Продолжить':'Пауза'};
+// On iOS, a second finger tapping a button while the joystick is held may
+// suppress the browser-generated click. Dispatch the action from that finger's
+// own touchend; do not cancel the joystick's separate active touch.
+for(const button of document.querySelectorAll('#controls > button')){
+ let buttonTouchId=null;
+ button.addEventListener('touchstart',e=>{
+  if(buttonTouchId!==null)return;
+  buttonTouchId=e.changedTouches[0].identifier;
+  e.stopPropagation();
+ },{passive:true});
+ button.addEventListener('touchend',e=>{
+  if(buttonTouchId===null)return;
+  for(const touch of e.changedTouches){
+   if(touch.identifier!==buttonTouchId)continue;
+   e.preventDefault();e.stopPropagation();buttonTouchId=null;
+   if(typeof button.onclick==='function')button.onclick(e);
+   break;
+  }
+ },{passive:false});
+ button.addEventListener('touchcancel',e=>{
+  for(const touch of e.changedTouches)if(touch.identifier===buttonTouchId)buttonTouchId=null;
+ },{passive:true});
+}
+// Reset can still intentionally stop movement, but actions/voice/camera do not.
+el('reset').onclick=()=>{
+ busya.actor.position.set(mazeCoord(1),0,mazeCoord(21));
+ pryanik.actor.position.set(mazeCoord(3),0,mazeCoord(21));
+ busya.actor.rotation.y=0;pryanik.actor.rotation.y=0;
+ stopStick();encounterText='';collected=0;foodTaken.clear();refreshFood();buildFood();el('message').textContent='';for(const id of ['busya','pryanik']){roaming[id].stop=0;roaming[id].reacting=0;roaming[id].reactCooldown=1;randomDestination(id)}
+};
+updateLabels();refreshFood();buildFood();
+function walkDog(dog,isMoving,dt,speed){
+ if(!dog.loaded)return;
+ if(dog.id==='pryanik'&&usingNewPryanik){
+  if(pryanikHead)pryanikHead.quaternion.copy(headRest);
+  if(pryanikTail)pryanikTail.quaternion.copy(tailRest);
+ }
+ // New Pryanik has his own active skeletal mixer.
+ if(dog.id==='busya'){
+  if(isMoving!==dog.moving){
+   if(isMoving&&dog.walk){dog.walk.reset().fadeIn(.18).play();if(dog.idle)dog.idle.fadeOut(.18)}
+   else if(dog.idle){dog.idle.reset().fadeIn(.18).play();if(dog.walk)dog.walk.fadeOut(.18)}
+  }
+  dog.mixer.timeScale=isMoving?2.8*Math.max(.35,speed/2.14245):1;dog.mixer.update(dt);
+ }else{
+  if(isMoving!==dog.moving){
+   dog.walk.reset().play();dog.mixer.update(0);
+  }
+  if(isMoving){dog.mixer.timeScale=usingNewPryanik?pryanikPaceModes[pryanikPaceIndex].rate:2.8;dog.mixer.update(dt)}
+ }
+ dog.moving=isMoving;
+}
+function moveActor(dog,dx,dz,step,dt){
+ const a=dog.actor;
+ const nx=a.position.x+dx*step,nz=a.position.z+dz*step;
+ if(mazeClear(nx,a.position.z))a.position.x=nx;
+ if(mazeClear(a.position.x,nz))a.position.z=nz;
+ const heading=Math.atan2(-dx,-dz),delta=Math.atan2(Math.sin(heading-a.rotation.y),Math.cos(heading-a.rotation.y));
+ a.rotation.y+=delta*(1-Math.exp(-dt*8));
+}
+const clock=new THREE.Clock(),desired=new THREE.Vector3(),target=new THREE.Vector3();
+const minimapCtx=el('minimap').getContext('2d');
+function drawMiniMap(player,npc){
+ const ctx=minimapCtx,c=184/23;
+ ctx.clearRect(0,0,184,184);ctx.fillStyle='#e8d5ae';ctx.fillRect(0,0,184,184);ctx.fillStyle='#477b43';
+ for(let z=0;z<23;z++)for(let x=0;x<23;x++)if(maze[z][x])ctx.fillRect(x*c,z*c,c+.3,c+.3);
+ for(const p of foodPositions){if(foodTaken.has(p.id))continue;
+  ctx.fillStyle='#ffc86b';ctx.fillRect((p.ix+.35)*c,(p.iz+.35)*c,c*.3,c*.3)}
+ for(const [dog,color,r] of [[npc,'#b86934',3],[player,'#ffffff',4]]){
+  ctx.fillStyle='#173e2b';ctx.beginPath();ctx.arc((dog.actor.position.x/TILE+MID+.5)*c,(dog.actor.position.z/TILE+MID+.5)*c,r+1,0,6.283);ctx.fill();
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc((dog.actor.position.x/TILE+MID+.5)*c,(dog.actor.position.z/TILE+MID+.5)*c,r,0,6.283);ctx.fill();
+ }
+}
+let cameraZoom=1.28; // approved default: 78% zoom
+function setCameraZoom(next){
+ cameraZoom=Math.min(2,Math.max(.30,Math.round(next*100)/100));
+ el('cam-zoom-label').textContent='Камера '+Math.round(100/cameraZoom)+'%';
+}
+el('cam-plus').onclick=()=>setCameraZoom(cameraZoom-.15);
+el('cam-minus').onclick=()=>setCameraZoom(cameraZoom+.15);
+el('cam-reset').onclick=()=>setCameraZoom(1.28);
+setCameraZoom(1.28);
+cam.position.set(pryanik.actor.position.x,5.5,pryanik.actor.position.z+8);cam.lookAt(pryanik.actor.position);
+// Measure actual animation-frame delivery, including stalls. Sample every ~0.8 s.
+const fpsMeter=el('fps-meter');let fpsStart=performance.now(),fpsFrames=0;
+function animate(){
+ requestAnimationFrame(animate);
+ const fpsNow=performance.now();fpsFrames++;
+ if(fpsNow-fpsStart>=800){
+  const fps=Math.round(fpsFrames*1000/(fpsNow-fpsStart));
+  fpsMeter.textContent='FPS: '+fps;
+  fpsMeter.className=fps<40?'low':fps<55?'mid':'';
+  fpsFrames=0;fpsStart=fpsNow;
+ }
+ const dt=Math.min(clock.getDelta(),.05);
+ const player=controlledDog(),npc=roamingDog();
+ if(!paused){
+   const mag=Math.min(1,Math.hypot(jx,jy)),moving=mag>.12;
+   const playerSpeed=(player.id==='busya'?2.14245:1.863)*1.15; // v35: +15% movement speed
+   if(moving&&player.loaded){
+     // Move relative to the camera's horizontal view direction:
+     // up = away from the screen, right = screen right, even in front view.
+     const forward=new THREE.Vector3();
+     cam.getWorldDirection(forward);forward.y=0;forward.normalize();
+     const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
+     const dir=forward.multiplyScalar(-jy/mag).addScaledVector(right,jx/mag).normalize();
+     moveActor(player,dir.x,dir.z,dt*playerSpeed*mag,dt);
+   }
+   walkDog(player,moving,dt,playerSpeed*mag);
+   let npcMoving=false;
+   if(aiEnabled&&npc.loaded&&player.loaded){
+    const nav=roaming[npc.id];nav.reactCooldown=Math.max(0,nav.reactCooldown-dt);
+    const separation=npc.actor.position.distanceTo(player.actor.position);
+    if(separation<1.55&&nav.reactCooldown===0&&nav.reacting===0){
+     nav.reacting=1;nav.stop=.6;nav.reactCooldown=5;
+     encounterText=npc.id==='pryanik'?'🐶 Пряник заметил Бусю!':'🐻 Буся заметил Пряника!';
+    }
+    if(nav.reacting===1){
+     const diff=player.actor.position.clone().sub(npc.actor.position);
+     const facing=Math.atan2(-diff.x,-diff.z),delta=Math.atan2(Math.sin(facing-npc.actor.rotation.y),Math.cos(facing-npc.actor.rotation.y));
+     npc.actor.rotation.y+=delta*(1-Math.exp(-dt*7));
+     nav.stop=Math.max(0,nav.stop-dt);
+     if(nav.stop===0){nav.reacting=0;nav.stop=.4;randomDestination(npc.id);encounterText=''}
+    }else if(nav.stop>0){nav.stop=Math.max(0,nav.stop-dt)}
+    else{
+     if(!nav.route.length)randomDestination(npc.id);
+     if(nav.route.length){
+      const waypoint=nav.route[0],diff=waypoint.clone().sub(npc.actor.position);diff.y=0;
+      const distance=diff.length();
+      if(distance<.22){
+       nav.route.shift();
+       if(!nav.route.length){nav.stop=.5+Math.random();randomDestination(npc.id)}
+      }else{
+       const speed=(npc.id==='busya'?1.42:.85)*1.15;
+       const oldX=npc.actor.position.x,oldZ=npc.actor.position.z;
+       diff.normalize();moveActor(npc,diff.x,diff.z,Math.min(distance,dt*speed),dt);
+       const moved=Math.hypot(npc.actor.position.x-oldX,npc.actor.position.z-oldZ);
+       npcMoving=moved>.0005;
+       nav.stuck=moved<.0005?nav.stuck+dt:0;
+       if(nav.stuck>.6){randomDestination(npc.id);nav.stop=.2}
+      }
+     }
+    }
+   }
+   walkDog(npc,npcMoving,dt,(npc.id==='busya'?1.42:.85)*1.15);
+   if(collectTimer>0)collectTimer=Math.max(0,collectTimer-dt);
+   else checkPickup(player);
+ }
+ animatePryanikHead(dt);
+ animatePryanikTail(dt);
+ // Rotate the tray only; keep the pickup ring and glow stationary.
+ mongeHolder.rotation.y+=dt*.8;
+ for(const g of foodObjects)if(g.visible){const holder=g.children[0];if(holder)holder.rotation.y+=dt*.8775}
+ pickup.position.y=.18+Math.sin(clock.elapsedTime*2.2)*.065;
+ const now=clock.elapsedTime;
+ glow.material.opacity=.39+.09*Math.sin(now*3.4);
+ glow.scale.setScalar(1.10+.07*Math.sin(now*3.4));
+ halo.rotation.z=now*.55;
+ for(let i=0;i<sparks.length;i++){
+   const a=now*.85+i*2*Math.PI/sparks.length,r=.38+.05*Math.sin(now*2+i);
+   sparks[i].position.set(Math.cos(a)*r,.24+.15*Math.sin(now*2.4+i*1.7),Math.sin(a)*r);
+ }
+ if(flashTimer>0){
+   flashTimer=Math.max(0,flashTimer-dt);
+   flash.visible=true;flash.scale.setScalar(1+3*(.42-flashTimer));
+   flash.material.opacity=flashTimer/.42*.36;
+ }else flash.visible=false;
+ for(const d of [busya,pryanik])d.shadow.position.set(d.actor.position.x,.033,d.actor.position.z);
+ const centre=new THREE.Vector3().addVectors(busya.actor.position,pryanik.actor.position).multiplyScalar(.5);
+ // Camera inspection: close-ups follow Pryanik rather than framing both dogs.
+ // Gameplay speed, directions and animation are not modified.
+ // Dog-eye: hide our own mesh/name, not the other character.
+ busya.holder.visible=!(view===2&&controlled==='busya');
+ pryanik.holder.visible=!(view===2&&controlled==='pryanik');
+ if(view===2){
+  const eyeHeight=controlled==='busya'?.70:.53;
+  const forward=new THREE.Vector3(-Math.sin(fpYaw)*Math.cos(fpPitch),Math.sin(fpPitch),-Math.cos(fpYaw)*Math.cos(fpPitch));
+  cam.position.copy(player.actor.position).add(new THREE.Vector3(0,eyeHeight,0)).addScaledVector(forward,.15);
+  target.copy(cam.position).add(forward);
+  cam.lookAt(target);
+ }else{
+  const anchor=view===1?player.actor.position:centre,pivotY=.68;
+  target.set(anchor.x,pivotY,anchor.z);
+  if(view===0)desired.copy(target).add(new THREE.Vector3(0,7.8-pivotY,12).multiplyScalar(cameraZoom));
+  else desired.copy(target).add(new THREE.Vector3(0,6.9-pivotY,9.3).multiplyScalar(cameraZoom));
+  const factor=1-Math.exp(-dt*3.5);cam.position.lerp(desired,factor);cam.lookAt(target);
+ }
+ const hedgeVisibilityChanged=revealPlayerBehindHedges(cam.position,player.actor.position);
+ // Keep static GPU instance matrices untouched between genuine visibility changes.
+ if(hedgeVisibilityChanged)updateSampleHedges();
+ drawMiniMap(player,npc);
+ el('position').textContent=(controlled==='busya'?'🎮 Буся':'🎮 Пряник')+' · '+(encounterText&&aiEnabled?encounterText:'второй '+(aiEnabled?'гуляет':'отдыхает'));
+ renderer.render(scene,cam);
+}
+animate();
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
