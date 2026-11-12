@@ -284,9 +284,7 @@ function revealPlayerBehindHedges(cameraPos,playerPos){
 // Full-garden visual test: replace all walk-facing hedge wall cells with instanced pawprint hedge blocks.
 // The maze grid, collision logic, characters, food and camera stay unchanged.
 let sampleHedge=null,sampleEnabled=true;
-const sampleIndices=positions.map(([x,z],i)=>({i,x,z,ix:Math.round(x/TILE+MID),iz:Math.round(z/TILE+MID)}))
- .filter(p=>[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>maze[p.iz+dz]?.[p.ix+dx]===0))
- .sort((a,b)=>Math.hypot(a.x-mazeCoord(3),a.z-mazeCoord(21))-Math.hypot(b.x-mazeCoord(3),b.z-mazeCoord(21)));
+const sampleIndices=positions.map(([x,z],i)=>({i,x,z}));
 const sampleOriginals=sampleIndices.map(({i})=>{
  const body=new THREE.Matrix4(),top=new THREE.Matrix4();hedge.getMatrixAt(i,body);tops.getMatrixAt(i,top);
  const cards=Array.from({length:FACE_COUNT},(_,f)=>{const m=new THREE.Matrix4();hedgeLeafCards.getMatrixAt(i*FACE_COUNT+f,m);return m});
