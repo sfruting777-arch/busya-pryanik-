@@ -69,7 +69,7 @@ button{border:1.5px solid #ffe0a2;border-radius:13px;color:#fff;background:#6651
 </style></head>
 <body>
 <div id="heading"><h1>🐻 Буся и Пряник 🐶 · Сад · тест фонтана v1</h1><div id="status">Загружаем двух артистов…</div><div id="position">Управляешь Бусей · Пряник гуляет сам</div></div>
-<div id="message"></div><button id="fountain-load" type="button">⛲ Загрузить мой фонтан</button><input id="fountain-file" type="file" accept=".glb,model/gltf-binary"><div id="fountain-status">Выбери GLB из «Файлов»</div><div id="fps-meter" aria-label="Частота кадров">FPS: --</div><button id="quality-toggle" type="button" aria-label="Переключить разрешение графики">Экран: 1.6×</button><button id="hedge-diagnostic" type="button" aria-label="Временно скрыть все стены для диагностики">Стены: вкл.</button><button id="flower-density" type="button" aria-label="Доля цветочных стен">Цветы: 100%</button>
+<div id="message"></div><button id="fountain-load" type="button">⛲ Загрузить мой фонтан</button><input id="fountain-file" type="file" accept=".glb,model/gltf-binary"><div id="fountain-status">Модель загрузится автоматически</div><div id="fps-meter" aria-label="Частота кадров">FPS: --</div><button id="quality-toggle" type="button" aria-label="Переключить разрешение графики">Экран: 1.6×</button><button id="hedge-diagnostic" type="button" aria-label="Временно скрыть все стены для диагностики">Стены: вкл.</button><button id="flower-density" type="button" aria-label="Доля цветочных стен">Цветы: 100%</button>
 <div id="load-panel" hidden><div id="load-title">🐾 Загружаем героев…</div>
 <div class="loading-line"><label>🐻 Буся</label><progress id="load-busya" value="0" max="100"></progress><span id="percent-busya">0%</span></div>
 <div class="loading-line"><label>🐶 Пряник 2.0</label><progress id="load-new" value="0" max="100"></progress><span id="percent-new">0%</span></div>
@@ -408,6 +408,18 @@ function installFountain(g){
  fountainStatus.textContent='⛲ Фонтан в центре! Можно гулять.';
  fountainLoadButton.textContent='⛲ Заменить GLB';
 }
+// Load the versioned fountain asset automatically from the repository on every visit.
+const fountainAssetUrl='../garden-assets/Meshy_AI_Pawprint_Fountain_1114003232_texture.glb';
+fountainStatus.textContent='⛲ Загружаем фонтан из GitHub…';
+fountainLoadButton.textContent='⛲ Загрузка…';fountainLoadButton.disabled=true;
+new GLTFLoader().load(fountainAssetUrl,g=>{
+ try{installFountain(g);fountainStatus.textContent='⛲ Фонтан установлен · GitHub';}
+ catch(e){fountainStatus.textContent='Ошибка: '+e.message}
+ fountainLoadButton.disabled=false;fountainLoadButton.textContent='⛲ Другой GLB';
+},undefined,e=>{
+ fountainStatus.textContent='Не загрузилось · '+(e.message||'проверь соединение');
+ fountainLoadButton.disabled=false;fountainLoadButton.textContent='⛲ Загрузить GLB';
+});
 fountainLoadButton.onclick=()=>fountainFileInput.click();
 fountainFileInput.onchange=()=>{
  const file=fountainFileInput.files?.[0];if(!file)return;
