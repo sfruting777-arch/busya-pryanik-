@@ -408,11 +408,11 @@ for(let i=0;i<10;i++){
  const theta=i*2.39996;const radius=.30+((i*7)%11)/15;
  sp.userData={theta,radius,phase:i*1.23};fountainFX.add(sp);poolSparkles.push(sp);
 }
-const glowCanvas=document.createElement('canvas');glowCanvas.width=128;glowCanvas.height=128;
-const glowCtx=glowCanvas.getContext('2d');const grad=glowCtx.createRadialGradient(64,64,2,64,64,64);
+const fountainGlowCanvas=document.createElement('canvas');fountainGlowCanvas.width=128;fountainGlowCanvas.height=128;
+const glowCtx=fountainGlowCanvas.getContext('2d');const grad=glowCtx.createRadialGradient(64,64,2,64,64,64);
 grad.addColorStop(0,'rgba(255,227,125,0.50)');grad.addColorStop(.28,'rgba(255,197,81,0.25)');grad.addColorStop(1,'rgba(255,174,68,0)');
 glowCtx.fillStyle=grad;glowCtx.fillRect(0,0,128,128);
-const pawGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(glowCanvas),transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending}));
+const pawGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(fountainGlowCanvas),transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending}));
 pawGlow.scale.set(1.42,1.42,1);pawGlow.renderOrder=1;fountainFX.add(pawGlow);
 function animateFountainFX(time){
  if(!customFountain)return;
