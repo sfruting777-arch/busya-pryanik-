@@ -251,6 +251,7 @@ body:has(#mode-popup:not([hidden])) #chase-hearts{top:calc(max(12px,env(safe-are
    <option value="reggae" selected>🌴 Happy Upbeat Marley Reggae</option>
    <option value="calm">🌊 Спокойный остров</option>
    <option value="fairy">✨ Вечерняя сказка</option>
+    <option value="jazz">🎷 Night in Venice · джаз</option>
   </select>
   <div id="island-day-reggae" class="menu-hint" style="color:#ffe0ac">☀️ Днём: Happy Upbeat Marley Reggae — Brotheration Records</div>
   <div id="island-reggae-status" class="menu-hint" role="status" hidden></div>
@@ -707,7 +708,20 @@ function startIslandSound(){
  return true;
 }
 islandMusicSelect.addEventListener('change',()=>{
- islandTrack=islandMusicSelect.value==='reggae'||islandMusicSelect.value in islandThemes?islandMusicSelect.value:'calm';
+ const chosen=islandMusicSelect.value;
+ if(chosen==='jazz'){
+  duskTarget=1;eveningButton.textContent='☀️ День';
+  eveningButton.setAttribute('aria-pressed','true');
+  el('menu-time-toggle').textContent='☀️ Вернуть день';
+ }else{
+  islandTrack=chosen==='reggae'||chosen in islandThemes?chosen:'calm';
+  if(duskTarget>.5){
+   duskTarget=0;eveningButton.textContent='🌙 Вечер';
+   eveningButton.setAttribute('aria-pressed','false');
+   el('menu-time-toggle').textContent='🌙 Включить вечер';
+  }
+ }
+ if(chosen==='jazz'&&jazzFailure)jazzFailure=false;
  syncNightJazz();
  if(islandAudio){islandAudio.phraseIndex=0;islandAudio.nextPhraseAt=0;}
 });
@@ -729,11 +743,24 @@ islandVolume.addEventListener('input',()=>{
  dayReggae.volume=jazzVolume();
 });
 document.addEventListener('visibilitychange',()=>{
- if(!islandAudio)return;
- if(document.hidden)islandAudio.ctx.suspend().catch(()=>{});
- else if(islandSoundOn)islandAudio.ctx.resume().catch(()=>{});
+ if(islandAudio){
+  if(document.hidden)islandAudio.ctx.suspend().catch(()=>{});
+  else if(islandSoundOn)islandAudio.ctx.resume().catch(()=>{});
+ }
  syncNightJazz();
 });
+window.addEventListener('pageshow',()=>{if(islandSoundOn){islandAudio?.ctx.resume().catch(()=>{});syncNightJazz();}});
+window.addEventListener('focus',()=>{if(islandSoundOn){islandAudio?.ctx.resume().catch(()=>{});syncNightJazz();}});
+// Safari may pause HTML audio on tab transitions: attempt to resume on a real touch.
+document.addEventListener('pointerdown',()=>{
+ if(!islandSoundOn||document.hidden)return;
+ if(islandAudio?.ctx.state==='suspended')islandAudio.ctx.resume().catch(()=>{});
+ if(jazzWanted())tryJazzPlay();
+ else if(reggaeWanted()&&dayReggae.paused&&!reggaeFailure)dayReggae.play().catch(()=>{});
+},{passive:true});
+nightJazz.addEventListener('pause',syncBackingAudio);
+dayReggae.addEventListener('playing',syncBackingAudio);
+dayReggae.addEventListener('pause',syncBackingAudio);
 
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 const highPixelRatio=Math.min(devicePixelRatio||1,1.6);let activePixelRatio=highPixelRatio;
