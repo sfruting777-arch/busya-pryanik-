@@ -1,0 +1,27 @@
+{
+  "id": "/busya-pryanik-/garden-home-app-v73/",
+  "name": "Буся против Пряника — Битва за Monge",
+  "short_name": "Буся и Пряник",
+  "description": "Сказочный сад, погоня и прогулка с Бусей и Пряником",
+  "lang": "ru",
+  "start_url": "/busya-pryanik-/garden-home-app-v73/",
+  "scope": "/busya-pryanik-/garden-home-app-v73/",
+  "display": "standalone",
+  "background_color": "#211525",
+  "theme_color": "#211525",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "../garden-assets/busya-pryanik-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../garden-assets/busya-pryanik-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
