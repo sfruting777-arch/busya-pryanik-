@@ -507,7 +507,7 @@ nightJazz.addEventListener('error',()=>{
 });
 
 // V48 daytime music. Original MP3 must be uploaded into garden-assets.
-const REGGAE_SRC='../garden-assets/happy-upbeat-marley-reggae-190316.mp3';
+const REGGAE_SRC='../garden-assets/brotheration_records-happy-upbeat-marley-reggae-190316.mp3';
 const dayReggae=new Audio(REGGAE_SRC);
 dayReggae.preload='none';dayReggae.loop=true;dayReggae.playsInline=true;
 const reggaeStatus=el('island-reggae-status');
@@ -537,7 +537,7 @@ dayReggae.addEventListener('error',()=>{
  reggaeFailure=true;
  if(!reggaeWanted())return;
  reggaeStatus.hidden=false;
- reggaeStatus.textContent='🎸 Не найден MP3: garden-assets/happy-upbeat-marley-reggae-190316.mp3. Пока играет запасная мелодия.';
+ reggaeStatus.textContent='🎸 Не найден MP3: garden-assets/brotheration_records-happy-upbeat-marley-reggae-190316.mp3. Пока играет запасная мелодия.';
  if(islandAudio)islandAudio.nextPhraseAt=0;
 });
 let islandAudio=null,islandSoundOn=false,islandSoundTimer=null;
