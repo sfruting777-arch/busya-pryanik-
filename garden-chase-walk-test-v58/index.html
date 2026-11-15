@@ -3192,12 +3192,19 @@ function animate(){
      nav.route=findMazeRoute(npc.actor.position,player.actor.position);
      chaseRouteTimer=.8;nav.stuck=0;
     }
+    // In the same cell, close the final distance without waiting for another grid waypoint.
+    if(!nav.route.length){
+     const dx=player.actor.position.x-npc.actor.position.x,dz=player.actor.position.z-npc.actor.position.z;
+     const dist=Math.hypot(dx,dz);
+     if(dist>.09)moveActor(npc,dx/dist,dz/dist,Math.min(dist,dt*(npc.id==='busya'?2.39:2.66)),dt);
+     npcMoving=dist>.09;
+    }
     if(nav.route.length){
      const goal=nav.route[0],dx=goal.x-npc.actor.position.x,dz=goal.z-npc.actor.position.z;
      const dist=Math.hypot(dx,dz);
      if(dist<.27){nav.route.shift();}
      else{
-      const chaseSpeed=npc.id==='busya'?2.03:1.84;
+      const chaseSpeed=npc.id==='busya'?2.39:2.66;
       const oldX=npc.actor.position.x,oldZ=npc.actor.position.z;
       moveActor(npc,dx/dist,dz/dist,Math.min(dist,dt*chaseSpeed),dt);
       npcMoving=Math.hypot(npc.actor.position.x-oldX,npc.actor.position.z-oldZ)>.0005;
@@ -3239,7 +3246,7 @@ function animate(){
      }
     }
    }
-   walkDog(npc,npcMoving,dt,gameMode==='chase'?(npc.id==='busya'?2.03:1.84):(npc.id==='busya'?1.42:.85)*1.15);
+   walkDog(npc,npcMoving,dt,gameMode==='chase'?(npc.id==='busya'?2.39:2.66):(npc.id==='busya'?1.42:.85)*1.15);
    checkChaseCatch(dt,player,npc);
    if(collectTimer>0)collectTimer=Math.max(0,collectTimer-dt);
    else checkPickup(player);
