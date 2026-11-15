@@ -622,8 +622,12 @@ dayReggae.addEventListener('error',()=>{
  reggaeFailure=true;
  if(!reggaeWanted())return;
  reggaeStatus.hidden=false;
- reggaeStatus.textContent='🎸 Не найден MP3: garden-assets/brotheration_records-happy-upbeat-marley-reggae-190316.mp3. Пока играет запасная мелодия.';
+ reggaeStatus.textContent='🎸 Регги временно не загрузилось. Попробуй снова включить атмосферу.';
  if(islandAudio)islandAudio.nextPhraseAt=0;
+});
+dayReggae.addEventListener('playing',()=>{
+ reggaeFailure=false;reggaeStatus.hidden=true;
+ if(islandAudio)syncBackingAudio();
 });
 let islandAudio=null,islandSoundOn=false,islandSoundTimer=null;
 let islandTrack='reggae';
@@ -728,6 +732,7 @@ islandMusicSelect.addEventListener('change',()=>{
 islandSoundToggle.addEventListener('click',()=>{
  islandSoundOn=!islandSoundOn;
  if(islandSoundOn&&!startIslandSound())islandSoundOn=false;
+ if(islandSoundOn){reggaeFailure=false;jazzFailure=false;}
  if(islandAudio){
   islandAudio.master.gain.setTargetAtTime(islandGainTarget(),islandAudio.ctx.currentTime,.3);
   if(islandSoundOn)islandAudio.nextPhraseAt=0;
@@ -756,7 +761,10 @@ document.addEventListener('pointerdown',()=>{
  if(!islandSoundOn||document.hidden)return;
  if(islandAudio?.ctx.state==='suspended')islandAudio.ctx.resume().catch(()=>{});
  if(jazzWanted())tryJazzPlay();
- else if(reggaeWanted()&&dayReggae.paused&&!reggaeFailure)dayReggae.play().catch(()=>{});
+ else if(reggaeWanted()&&dayReggae.paused){
+  reggaeFailure=false;
+  dayReggae.play().catch(()=>{});
+ }
 },{passive:true});
 nightJazz.addEventListener('pause',syncBackingAudio);
 dayReggae.addEventListener('playing',syncBackingAudio);
