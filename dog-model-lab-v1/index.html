@@ -11,7 +11,7 @@ header{position:fixed;z-index:3;top:env(safe-area-inset-top);left:0;right:0;text
 button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:#395c52;border:1px solid #b5c9bc;color:white;border-radius:11px;font:600 13px system-ui;padding:11px 13px;min-height:43px}
 .btn.primary{background:#9f6d31;border-color:#ffd399}.btn input{display:none}
 .hint{position:fixed;z-index:3;top:83px;left:12px;right:12px;text-align:center;font-size:12px;color:#d6dfd4;pointer-events:none}
-#stats{position:fixed;z-index:3;top:130px;left:10px;max-width:min(75%,310px);background:#172420bd;border:1px solid #ffffff23;padding:8px 10px;border-radius:10px;font-size:11px;line-height:1.5;white-space:pre-line;display:none}
+#stats{position:fixed;z-index:3;top:115px;right:10px;max-width:min(84%,290px);background:#172420ee;border:1px solid #ffffff23;padding:8px 10px;border-radius:10px;font-size:11px;line-height:1.5;white-space:pre-line;display:none}
 #drop{position:fixed;inset:0;z-index:8;background:#102322dd;border:4px dashed #eac68d;display:none;place-items:center;text-align:center;font-weight:bold;font-size:25px}
 @media(max-width:500px){h1{font-size:16px}.controls{gap:5px}button,.btn{font-size:12px;padding:9px 10px}.hint{top:78px}}
 </style>
@@ -24,7 +24,7 @@ button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:5p
 <div id="drop">Отпусти GLB, чтобы загрузить</div>
 <div class="controls">
 <label class="btn primary">📁 Открыть GLB<input type="file" id="file" accept=".glb,model/gltf-binary,application/octet-stream"></label>
-<button id="reset">↺ Камера</button><button id="turn">🔄 Автовращение</button><button id="wire">◈ Сетка</button><button id="anim" style="display:none">▶ Анимация</button>
+<button id="statsBtn">📊 Статистика</button><button id="reset">↺ Камера</button><button id="turn">🔄 Автовращение</button><button id="wire">◈ Сетка</button><button id="anim" style="display:none">▶ Анимация</button>
 </div>
 <script type="module">
 import * as THREE from 'three';
@@ -75,11 +75,12 @@ function loadFile(file){
    const list=Array.isArray(x.material)?x.material:[x.material];list.forEach(m=>{if(m)mats.add(m);if(m)m.wireframe=showWire})});
   if(clips.length){mixer=new THREE.AnimationMixer(current);document.getElementById('anim').style.display='';document.getElementById('anim').textContent='▶ Анимация'}
   else document.getElementById('anim').style.display='none';
-  stats.style.display='block';stats.textContent='Файл: '+file.name+'\nТреугольники: '+triangles.toLocaleString('ru-RU')+'\nВершины: '+vertices.toLocaleString('ru-RU')+'\nМеши: '+meshes+' · материалы: '+mats.size+'\nСкелетные меши: '+skinned+' · анимации: '+clips.length+'\nНормализованная высота: '+size.y.toFixed(2)+' м';
+  stats.textContent='Файл: '+file.name+'\nТреугольники: '+triangles.toLocaleString('ru-RU')+'\nВершины: '+vertices.toLocaleString('ru-RU')+'\nМеши: '+meshes+' · материалы: '+mats.size+'\nСкелетные меши: '+skinned+' · анимации: '+clips.length+'\nНормализованная высота: '+size.y.toFixed(2)+' м';
   status.textContent='✅ Модель загружена. Осматривай со всех сторон!';
  },undefined,e=>{URL.revokeObjectURL(url);status.textContent='Ошибка загрузки: '+(e?.message||String(e))});
 }
 document.getElementById('file').addEventListener('change',e=>loadFile(e.target.files?.[0]));
+document.getElementById('statsBtn').onclick=()=>{const visible=stats.style.display==='block';stats.style.display=visible?'none':'block';document.getElementById('statsBtn').textContent=visible?'📊 Статистика':'✕ Закрыть данные'};
 document.getElementById('reset').onclick=resetCamera;
 document.getElementById('turn').onclick=()=>{turning=!turning;document.getElementById('turn').textContent=turning?'⏹ Автовращение':'🔄 Автовращение';controls.autoRotate=turning;controls.autoRotateSpeed=1.8};
 document.getElementById('wire').onclick=()=>{showWire=!showWire;current?.traverse(x=>{if(x.isMesh){for(const m of(Array.isArray(x.material)?x.material:[x.material]))if(m)m.wireframe=showWire}});document.getElementById('wire').textContent=showWire?'◈ Обычный вид':'◈ Сетка'};
