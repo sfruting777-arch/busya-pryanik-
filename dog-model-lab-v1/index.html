@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#1c2827">
+<title>🐕 Полигон — тест новой собаки</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#1c2827;color:#fff;font:15px system-ui,-apple-system,sans-serif;overflow:hidden}canvas{display:block;touch-action:none}
+header{position:fixed;z-index:3;top:env(safe-area-inset-top);left:0;right:0;text-align:center;pointer-events:none;padding:10px 15px;text-shadow:0 2px 6px #000}h1{font-size:18px;margin:0 0 4px;color:#ffe4b3}#status{font-size:12px;opacity:.92}
+.controls{position:fixed;z-index:4;bottom:calc(12px + env(safe-area-inset-bottom));left:10px;right:10px;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:#395c52;border:1px solid #b5c9bc;color:white;border-radius:11px;font:600 13px system-ui;padding:11px 13px;min-height:43px}
+.btn.primary{background:#9f6d31;border-color:#ffd399}.btn input{display:none}
+.hint{position:fixed;z-index:3;top:83px;left:12px;right:12px;text-align:center;font-size:12px;color:#d6dfd4;pointer-events:none}
+#stats{position:fixed;z-index:3;top:130px;left:10px;max-width:min(75%,310px);background:#172420bd;border:1px solid #ffffff23;padding:8px 10px;border-radius:10px;font-size:11px;line-height:1.5;white-space:pre-line;display:none}
+#drop{position:fixed;inset:0;z-index:8;background:#102322dd;border:4px dashed #eac68d;display:none;place-items:center;text-align:center;font-weight:bold;font-size:25px}
+@media(max-width:500px){h1{font-size:16px}.controls{gap:5px}button,.btn{font-size:12px;padding:9px 10px}.hint{top:78px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+</head>
+<body>
+<header><h1>🐕 Полигон — новая собака</h1><div id="status">Выбери GLB из файлов iPhone / iPad / ПК</div></header>
+<div class="hint">Проводи пальцем — вращение · двумя пальцами — масштаб</div>
+<div id="stats"></div>
+<div id="drop">Отпусти GLB, чтобы загрузить</div>
+<div class="controls">
+<label class="btn primary">📁 Открыть GLB<input type="file" id="file" accept=".glb,model/gltf-binary,application/octet-stream"></label>
+<button id="reset">↺ Камера</button><button id="turn">🔄 Автовращение</button><button id="wire">◈ Сетка</button><button id="anim" style="display:none">▶ Анимация</button>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const status=document.getElementById('status'),stats=document.getElementById('stats');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x253635);
+const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.01,150);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.55;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe5f2ff,0x775b3b,2.8));
+const key=new THREE.DirectionalLight(0xffe6ba,3.1);key.position.set(-3,7,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;scene.add(key);
+const rim=new THREE.DirectionalLight(0xb6e1ff,1.35);rim.position.set(3,4,-4);scene.add(rim);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(30,100),new THREE.MeshStandardMaterial({color:0x506b5b,roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(16,32,0x8ea38c,0x71887a);grid.position.y=.006;grid.material.opacity=.24;grid.material.transparent=true;scene.add(grid);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.minDistance=.25;controls.maxDistance=50;controls.maxPolarAngle=Math.PI/2-.025;
+let current=null,mixer=null,clips=[],showWire=false,turning=false,playing=false,clock=new THREE.Clock(),centerY=.7,camRadius=3;
+function resetCamera(){controls.target.set(0,centerY,0);camera.position.set(camRadius*.85,centerY+camRadius*.36,camRadius*1.05);controls.update()}
+resetCamera();
+function loadFile(file){
+ if(!file)return;
+ if(!/\.glb$/i.test(file.name)){status.textContent='Нужен файл .glb';return}
+ status.textContent='Загружаем '+file.name+' ('+(file.size/1048576).toFixed(1)+' МБ)…';
+ const url=URL.createObjectURL(file);
+ const loader=new GLTFLoader();
+ loader.load(url,gltf=>{
+  URL.revokeObjectURL(url);
+  if(current){scene.remove(current);current.traverse(x=>{if(x.isMesh){x.geometry?.dispose();const ms=Array.isArray(x.material)?x.material:[x.material];for(const m of ms){if(!m)continue;for(const k of ['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap'])m[k]?.dispose();m.dispose()}}})}
+  if(mixer)mixer.stopAllAction();mixer=null;clips=gltf.animations||[];playing=false;
+  current=gltf.scene;scene.add(current);
+  current.updateMatrixWorld(true);
+  let bounds=new THREE.Box3().setFromObject(current),size=bounds.getSize(new THREE.Vector3());
+  if(!(Math.max(size.x,size.y,size.z)>0))throw Error('Не найдена геометрия');
+  const scale=1.4/Math.max(size.y,.001);
+  current.scale.setScalar(scale);current.updateMatrixWorld(true);
+  bounds.setFromObject(current);const c=bounds.getCenter(new THREE.Vector3());
+  current.position.set(-c.x,-bounds.min.y,-c.z);current.updateMatrixWorld(true);
+  bounds.setFromObject(current);size=bounds.getSize(new THREE.Vector3());
+  centerY=size.y*.48;camRadius=Math.max(2.3,Math.max(size.x,size.y,size.z)*2);
+  controls.minDistance=Math.max(.35,size.y*.3);controls.maxDistance=Math.max(8,size.y*12);
+  resetCamera();
+  let meshes=0,triangles=0,vertices=0,mats=new Set(),skinned=0;
+  current.traverse(x=>{if(!x.isMesh)return;meshes++;if(x.isSkinnedMesh)skinned++;x.castShadow=true;x.receiveShadow=true;
+   const g=x.geometry;if(!g)return;const pos=g.getAttribute('position');vertices+=pos?.count||0;triangles+=g.index?Math.floor(g.index.count/3):Math.floor((pos?.count||0)/3);
+   const list=Array.isArray(x.material)?x.material:[x.material];list.forEach(m=>{if(m)mats.add(m);if(m)m.wireframe=showWire})});
+  if(clips.length){mixer=new THREE.AnimationMixer(current);document.getElementById('anim').style.display='';document.getElementById('anim').textContent='▶ Анимация'}
+  else document.getElementById('anim').style.display='none';
+  stats.style.display='block';stats.textContent='Файл: '+file.name+'\nТреугольники: '+triangles.toLocaleString('ru-RU')+'\nВершины: '+vertices.toLocaleString('ru-RU')+'\nМеши: '+meshes+' · материалы: '+mats.size+'\nСкелетные меши: '+skinned+' · анимации: '+clips.length+'\nНормализованная высота: '+size.y.toFixed(2)+' м';
+  status.textContent='✅ Модель загружена. Осматривай со всех сторон!';
+ },undefined,e=>{URL.revokeObjectURL(url);status.textContent='Ошибка загрузки: '+(e?.message||String(e))});
+}
+document.getElementById('file').addEventListener('change',e=>loadFile(e.target.files?.[0]));
+document.getElementById('reset').onclick=resetCamera;
+document.getElementById('turn').onclick=()=>{turning=!turning;document.getElementById('turn').textContent=turning?'⏹ Автовращение':'🔄 Автовращение';controls.autoRotate=turning;controls.autoRotateSpeed=1.8};
+document.getElementById('wire').onclick=()=>{showWire=!showWire;current?.traverse(x=>{if(x.isMesh){for(const m of(Array.isArray(x.material)?x.material:[x.material]))if(m)m.wireframe=showWire}});document.getElementById('wire').textContent=showWire?'◈ Обычный вид':'◈ Сетка'};
+document.getElementById('anim').onclick=()=>{if(!mixer)return;playing=!playing;if(playing){mixer.stopAllAction();mixer.clipAction(clips[0]).reset().play()}else mixer.stopAllAction();document.getElementById('anim').textContent=playing?'⏸ Анимация':'▶ Анимация'};
+const drop=document.getElementById('drop');window.addEventListener('dragover',e=>{e.preventDefault();drop.style.display='grid'});drop.addEventListener('dragleave',e=>{e.preventDefault();drop.style.display='none'});window.addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';loadFile(e.dataTransfer?.files?.[0])});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(playing)mixer?.update(dt);controls.update();renderer.render(scene,camera)}animate();
+</script></body></html>
